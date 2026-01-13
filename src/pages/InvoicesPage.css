@@ -1,0 +1,38 @@
+/* InvoicesPage Styles */
+
+.invoices-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.invoice-ref {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.devis-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-primary-400);
+  font-size: var(--text-sm);
+  transition: color var(--transition-fast);
+}
+
+.devis-link:hover {
+  color: var(--color-primary-300);
+}
+
+.spinner-sm {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+.currency {
+  font-size: var(--text-lg);
+  font-weight: 400;
+}

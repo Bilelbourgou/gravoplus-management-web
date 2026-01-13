@@ -1,0 +1,282 @@
+import { useEffect, useState } from 'react';
+import {
+  Users,
+  FileText,
+  Receipt,
+  TrendingUp,
+  ArrowUpRight,
+  Clock,
+} from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
+import { Header } from '../components/layout';
+import { dashboardApi } from '../services';
+import type { DashboardStats, DevisStatus } from '../types';
+import './DashboardPage.css';
+
+const STATUS_COLORS: Record<DevisStatus, string> = {
+  DRAFT: '#64748b',
+  VALIDATED: '#3b82f6',
+  INVOICED: '#22c55e',
+  CANCELLED: '#ef4444',
+};
+
+const STATUS_LABELS: Record<DevisStatus, string> = {
+  DRAFT: 'Brouillon',
+  VALIDATED: 'Validé',
+  INVOICED: 'Facturé',
+  CANCELLED: 'Annulé',
+};
+
+export function DashboardPage() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await dashboardApi.getStats();
+        setStats(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erreur de chargement');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="dashboard-loading">
+        <div className="spinner" />
+        <p>Chargement du tableau de bord...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dashboard-error">
+        <p>Erreur: {error}</p>
+        <button className="btn btn-primary" onClick={() => window.location.reload()}>
+          Réessayer
+        </button>
+      </div>
+    );
+  }
+
+  if (!stats) return null;
+
+  const pieData = [
+    { name: 'Brouillon', value: stats.devisByStatus.draft, color: STATUS_COLORS.DRAFT },
+    { name: 'Validé', value: stats.devisByStatus.validated, color: STATUS_COLORS.VALIDATED },
+    { name: 'Facturé', value: stats.devisByStatus.invoiced, color: STATUS_COLORS.INVOICED },
+    { name: 'Annulé', value: stats.devisByStatus.cancelled, color: STATUS_COLORS.CANCELLED },
+  ].filter(item => item.value > 0);
+
+  return (
+    <>
+      <Header title="Tableau de bord" subtitle="Vue d'ensemble de votre activité" />
+      
+      <div className="dashboard-content">
+        {/* Stats Cards */}
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-icon blue">
+              <Users size={24} />
+            </div>
+            <div className="stat-value">{stats.totalClients}</div>
+            <div className="stat-label">Clients</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon orange">
+              <FileText size={24} />
+            </div>
+            <div className="stat-value">{stats.totalDevis}</div>
+            <div className="stat-label">Devis</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon green">
+              <Receipt size={24} />
+            </div>
+            <div className="stat-value">{stats.totalInvoices}</div>
+            <div className="stat-label">Factures</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon blue">
+              <TrendingUp size={24} />
+            </div>
+            <div className="stat-value">{stats.totalRevenue.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-label">Chiffre d'affaires</div>
+          </div>
+        </div>
+
+        {/* Charts Row */}
+        <div className="charts-row">
+          {/* Revenue Chart */}
+          <div className="card chart-card">
+            <div className="card-header">
+              <h3>Revenus mensuels</h3>
+            </div>
+            <div className="card-body chart-container">
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={stats.monthlyRevenue}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="#64748b"
+                    tick={{ fill: '#94a3b8' }}
+                  />
+                  <YAxis 
+                    stroke="#64748b"
+                    tick={{ fill: '#94a3b8' }}
+                    tickFormatter={(value) => `${value} TND`}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      background: '#1e293b',
+                      border: '1px solid #334155',
+                      borderRadius: '8px',
+                    }}
+                    labelStyle={{ color: '#f8fafc' }}
+                    formatter={(value) => [`${(value as number).toFixed(2)} TND`, 'Revenu']}
+                  />
+                  <Bar 
+                    dataKey="revenue" 
+                    fill="url(#barGradient)"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <defs>
+                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#6366f1" />
+                      <stop offset="100%" stopColor="#4f46e5" />
+                    </linearGradient>
+                  </defs>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Status Pie Chart */}
+          <div className="card chart-card pie-chart-card">
+            <div className="card-header">
+              <h3>Statut des devis</h3>
+            </div>
+            <div className="card-body chart-container">
+              {pieData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={4}
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        background: '#1e293b',
+                        border: '1px solid #334155',
+                        borderRadius: '8px',
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="no-data">
+                  <p>Aucun devis disponible</p>
+                </div>
+              )}
+              <div className="pie-legend">
+                {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                  <div key={key} className="legend-item">
+                    <span 
+                      className="legend-color" 
+                      style={{ background: STATUS_COLORS[key as DevisStatus] }}
+                    />
+                    <span className="legend-label">{label}</span>
+                    <span className="legend-value">
+                      {stats.devisByStatus[key.toLowerCase() as keyof typeof stats.devisByStatus]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Devis */}
+        <div className="card">
+          <div className="card-header flex justify-between items-center">
+            <h3>Devis récents</h3>
+            <a href="/devis" className="btn btn-ghost btn-sm">
+              Voir tout <ArrowUpRight size={16} />
+            </a>
+          </div>
+          <div className="card-body">
+            {stats.recentDevis.length > 0 ? (
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Référence</th>
+                      <th>Client</th>
+                      <th>Montant</th>
+                      <th>Statut</th>
+                      <th>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats.recentDevis.map((devis) => (
+                      <tr key={devis.id}>
+                        <td className="font-medium">{devis.reference}</td>
+                        <td>{devis.clientName}</td>
+                        <td>{devis.totalAmount.toFixed(2)} TND</td>
+                        <td>
+                          <span className={`badge badge-${devis.status.toLowerCase()}`}>
+                            {STATUS_LABELS[devis.status]}
+                          </span>
+                        </td>
+                        <td className="flex items-center gap-2 text-muted">
+                          <Clock size={14} />
+                          {new Date(devis.createdAt).toLocaleDateString('fr-FR')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="no-data">
+                <FileText size={48} strokeWidth={1} />
+                <p>Aucun devis récent</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

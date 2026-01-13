@@ -1,0 +1,193 @@
+/* MachinesPage Styles */
+
+.machines-pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-6);
+}
+
+.machine-pricing-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.machine-pricing-card:hover {
+  border-color: var(--color-primary-500);
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-4px);
+}
+
+.machine-pricing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--space-5);
+}
+
+.machine-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.machine-icon.cnc {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+}
+
+.machine-icon.laser {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.machine-icon.champs {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.machine-icon.panneaux {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+.machine-pricing-body {
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.machine-name {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.machine-description {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.machine-price {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.price-value {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.price-unit {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.machine-pricing-footer {
+  padding: var(--space-4) var(--space-5);
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.last-updated {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* Price Input */
+.price-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.price-input {
+  padding-right: var(--space-12) !important;
+}
+
+.price-currency {
+  position: absolute;
+  right: var(--space-4);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Formulas Grid */
+.formulas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-4);
+}
+
+.formula-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+}
+
+.formula-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.formula-icon.cnc {
+  background: rgba(99, 102, 241, 0.2);
+  color: #6366f1;
+}
+
+.formula-icon.laser {
+  background: rgba(245, 158, 11, 0.2);
+  color: #f59e0b;
+}
+
+.formula-icon.champs {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+}
+
+.formula-icon.panneaux {
+  background: rgba(59, 130, 246, 0.2);
+  color: #3b82f6;
+}
+
+.formula-content h4 {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.formula-content code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.mb-4 {
+  margin-bottom: var(--space-4);
+}
+
+.mt-6 {
+  margin-top: var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .machines-pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
