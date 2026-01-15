@@ -326,6 +326,36 @@
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
+/* Invoice Details in Modal Footer */
+.invoice-details {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  padding: var(--space-4);
+  background: rgba(99, 102, 241, 0.05);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: var(--radius-lg);
+  gap: var(--space-4);
+}
+
+.invoice-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.invoice-reference {
+  font-weight: 600;
+  font-size: var(--text-base);
+  color: var(--text-primary);
+}
+
+.invoice-date {
+  font-size: var(--text-sm);
+  margin-top: var(--space-1);
+}
+
 @media (max-width: 768px) {
   .actions-right {
     flex-direction: column;
@@ -353,5 +383,15 @@
   .devis-line-details {
     width: 100%;
     order: 3;
+  }
+
+  .invoice-details {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .invoice-info {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

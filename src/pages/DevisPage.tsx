@@ -12,6 +12,7 @@ import {
   Filter,
   ChevronDown,
   Trash2,
+  Download,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { devisApi, clientsApi, servicesApi, materialsApi, invoicesApi } from '../services';
@@ -254,6 +255,23 @@ function DevisDetailModal({
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!devis.invoice) return;
+    try {
+      const blob = await invoicesApi.downloadPdf(devis.invoice.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${devis.invoice.reference}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err) {
+      console.error('Error downloading PDF:', err);
     }
   };
 
@@ -527,7 +545,27 @@ function DevisDetailModal({
             </button>
           )}
           {devis.status === 'INVOICED' && devis.invoice && (
-            <span className="text-muted">Facture: {devis.invoice.reference}</span>
+            <div className="invoice-details">
+              <div className="invoice-info">
+                <Receipt size={18} className="text-primary" />
+                <div>
+                  <div className="invoice-reference">{devis.invoice.reference}</div>
+                  <div className="invoice-date text-muted">
+                    Créé le {new Date(devis.invoice.createdAt).toLocaleDateString('fr-FR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                </div>
+              </div>
+              <button className="btn btn-primary btn-sm" onClick={handleDownloadPdf}>
+                <Download size={16} />
+                Télécharger PDF
+              </button>
+            </div>
           )}
           <button className="btn btn-secondary" onClick={onClose}>
             Fermer
@@ -571,12 +609,21 @@ export function DevisPage() {
     }
   };
 
-  const refreshSelectedDevis = async () => {
+  const handleRefresh = async () => {
     if (!selectedDevis) return;
     try {
       const updated = await devisApi.getById(selectedDevis.id);
       setSelectedDevis(updated);
       setDevisList(devisList.map((d) => (d.id === updated.id ? updated : d)));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleViewDevis = async (devis: Devis) => {
+    try {
+      const fullDevis = await devisApi.getById(devis.id);
+      setSelectedDevis(fullDevis);
     } catch (err) {
       console.error(err);
     }
@@ -753,7 +800,7 @@ export function DevisPage() {
                       <td>
                         <button
                           className="btn btn-ghost btn-icon"
-                          onClick={() => setSelectedDevis(devis)}
+                          onClick={() => handleViewDevis(devis)}
                           title="Voir les détails"
                         >
                           <Eye size={18} />
@@ -806,7 +853,7 @@ export function DevisPage() {
           onValidate={handleValidate}
           onCancel={handleCancel}
           onCreateInvoice={handleCreateInvoice}
-          onRefresh={refreshSelectedDevis}
+          onRefresh={handleRefresh}
         />
       )}
     </>
