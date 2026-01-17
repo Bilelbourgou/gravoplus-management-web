@@ -51,7 +51,7 @@ export function LoginPage() {
         <div className="login-card">
           <div className="login-header">
             <div className="login-logo">
-              <div className="logo-icon-lg">G+</div>
+              <img src="/logo.png" alt="GravoPlus" className="logo-image-lg" />
             </div>
             <h1>GravoPlus</h1>
             <p>Gestion d'atelier de gravure</p>

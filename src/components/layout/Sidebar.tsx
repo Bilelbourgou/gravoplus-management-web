@@ -34,7 +34,7 @@ export function Sidebar() {
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
       <div className="sidebar-header">
         <div className="logo">
-          <div className="logo-icon">G+</div>
+          <img src="/logo.png" alt="GravoPlus" className="logo-image" />
           {!collapsed && <span className="logo-text">GravoPlus</span>}
         </div>
         <button

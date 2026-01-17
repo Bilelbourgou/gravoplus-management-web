@@ -5,17 +5,17 @@
 
 /* CSS Custom Properties */
 :root {
-  /* Colors - Primary (Blue-Purple Gradient) */
-  --color-primary-50: #eef2ff;
-  --color-primary-100: #e0e7ff;
-  --color-primary-200: #c7d2fe;
-  --color-primary-300: #a5b4fc;
-  --color-primary-400: #818cf8;
-  --color-primary-500: #6366f1;
-  --color-primary-600: #4f46e5;
-  --color-primary-700: #4338ca;
-  --color-primary-800: #3730a3;
-  --color-primary-900: #312e81;
+  /* Colors - Primary (Green from Logo) */
+  --color-primary-50: #f1f8e9;
+  --color-primary-100: #dcedc8;
+  --color-primary-200: #c5e1a5;
+  --color-primary-300: #aed581;
+  --color-primary-400: #9ccc65;
+  --color-primary-500: #8BC34A;
+  --color-primary-600: #7cb342;
+  --color-primary-700: #689f38;
+  --color-primary-800: #558b2f;
+  --color-primary-900: #33691e;
 
   /* Colors - Neutral (Slate) */
   --color-neutral-50: #f8fafc;
@@ -31,14 +31,14 @@
   --color-neutral-950: #020617;
 
   /* Colors - Semantic */
-  --color-success-500: #22c55e;
-  --color-success-600: #16a34a;
+  --color-success-500: #2E7D55;
+  --color-success-600: #256647;
   --color-warning-500: #f59e0b;
   --color-warning-600: #d97706;
   --color-error-500: #ef4444;
   --color-error-600: #dc2626;
-  --color-info-500: #3b82f6;
-  --color-info-600: #2563eb;
+  --color-info-500: #2E7D55;
+  --color-info-600: #256647;
 
   /* Background Colors */
   --bg-base: var(--color-neutral-950);
@@ -82,7 +82,7 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -4px rgba(0, 0, 0, 0.4);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.4);
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+  --shadow-glow: 0 0 20px rgba(139, 195, 74, 0.3);
 
   /* Typography */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -204,12 +204,12 @@ p {
 .btn-primary {
   background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600));
   color: white;
-  box-shadow: var(--shadow-md), 0 0 0 0 rgba(99, 102, 241, 0);
+  box-shadow: var(--shadow-md), 0 0 0 0 rgba(139, 195, 74, 0);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--color-primary-400), var(--color-primary-500));
-  box-shadow: var(--shadow-lg), 0 0 20px rgba(99, 102, 241, 0.3);
+  box-shadow: var(--shadow-lg), 0 0 20px rgba(139, 195, 74, 0.3);
   transform: translateY(-1px);
 }
 
@@ -292,7 +292,7 @@ p {
 .form-textarea:focus {
   outline: none;
   border-color: var(--color-primary-500);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  box-shadow: 0 0 0 3px rgba(139, 195, 74, 0.15);
 }
 
 .form-input::placeholder {
@@ -359,7 +359,7 @@ p {
 }
 
 .stat-icon.blue {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(99, 102, 241, 0.1));
+  background: linear-gradient(135deg, rgba(139, 195, 74, 0.2), rgba(139, 195, 74, 0.1));
   color: var(--color-primary-400);
 }
 
@@ -474,7 +474,7 @@ p {
 }
 
 .badge-admin {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(139, 92, 246, 0.3));
+  background: linear-gradient(135deg, rgba(139, 195, 74, 0.3), rgba(124, 179, 66, 0.3));
   color: var(--color-primary-300);
 }
 

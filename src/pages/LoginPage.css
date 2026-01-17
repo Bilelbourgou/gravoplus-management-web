@@ -35,18 +35,10 @@
   margin-bottom: var(--space-4);
 }
 
-.logo-icon-lg {
-  width: 64px;
-  height: 64px;
-  background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700));
-  border-radius: var(--radius-xl);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--text-2xl);
-  font-weight: 700;
-  color: white;
-  box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+.logo-image-lg {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
 }
 
 .login-header h1 {
@@ -142,7 +134,7 @@
   position: absolute;
   inset: 0;
   background: 
-    radial-gradient(ellipse at 80% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 20% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 100%);
+    radial-gradient(ellipse at 80% 20%, rgba(139, 195, 74, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 80%, rgba(46, 125, 85, 0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(139, 195, 74, 0.05) 0%, transparent 100%);
 }

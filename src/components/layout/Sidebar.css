@@ -31,17 +31,10 @@
   gap: var(--space-3);
 }
 
-.logo-icon {
+.logo-image {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-700));
-  border-radius: var(--radius-lg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: var(--text-lg);
-  color: white;
+  object-fit: contain;
   flex-shrink: 0;
 }
 
@@ -103,9 +96,9 @@
 }
 
 .nav-link.active {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(99, 102, 241, 0.05));
+  background: linear-gradient(135deg, rgba(139, 195, 74, 0.15), rgba(139, 195, 74, 0.05));
   color: var(--color-primary-400);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(139, 195, 74, 0.2);
 }
 
 .nav-link.active::before {
