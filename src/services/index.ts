@@ -223,6 +223,34 @@ export const servicesApi = {
     },
 };
 
+// ==================== Payments ====================
+
+export const paymentsApi = {
+    getByInvoice: async (invoiceId: string) => {
+        const res = await api.get<ApiResponse<any[]>>(`/payments/invoice/${invoiceId}`);
+        return res.data.data!;
+    },
+
+    getStats: async (invoiceId: string) => {
+        const res = await api.get<ApiResponse<any>>(`/payments/invoice/${invoiceId}/stats`);
+        return res.data.data!;
+    },
+
+    create: async (invoiceId: string, data: any) => {
+        const res = await api.post<ApiResponse<any>>(`/payments/invoice/${invoiceId}`, data);
+        return res.data.data!;
+    },
+
+    update: async (paymentId: string, data: any) => {
+        const res = await api.put<ApiResponse<any>>(`/payments/${paymentId}`, data);
+        return res.data.data!;
+    },
+
+    delete: async (paymentId: string) => {
+        await api.delete(`/payments/${paymentId}`);
+    },
+};
+
 // ==================== Dashboard ====================
 
 export const dashboardApi = {

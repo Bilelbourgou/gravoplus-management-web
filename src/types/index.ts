@@ -110,6 +110,37 @@ export interface Invoice {
     devisId: string;
 }
 
+export interface Payment {
+    id: string;
+    amount: number;
+    paymentDate: string;
+    paymentMethod?: string;
+    reference?: string;
+    notes?: string;
+    createdAt: string;
+    updatedAt: string;
+    invoiceId: string;
+}
+
+export interface PaymentStats {
+    invoiceId: string;
+    invoiceReference: string;
+    totalAmount: number;
+    totalPaid: number;
+    remaining: number;
+    percentPaid: number;
+    paymentCount: number;
+    isPaid: boolean;
+}
+
+export interface CreatePaymentFormData {
+    amount: number;
+    paymentDate?: string;
+    paymentMethod?: string;
+    reference?: string;
+    notes?: string;
+}
+
 export interface DashboardStats {
     totalClients: number;
     totalDevis: number;
