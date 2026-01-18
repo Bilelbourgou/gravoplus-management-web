@@ -147,9 +147,16 @@ export const invoicesApi = {
         return res.data.data!;
     },
 
-    createFromDevis: async (devisId: string): Promise<Invoice> => {
-        const res = await api.post<ApiResponse<Invoice>>(`/invoices/from-devis/${devisId}`);
-        return res.data.data!;
+    createFromDevis: async (devisIds: string | string[]): Promise<Invoice> => {
+        // Support both single devis and multiple devis
+        if (Array.isArray(devisIds)) {
+            const res = await api.post<ApiResponse<Invoice>>('/invoices/from-devis', { devisIds });
+            return res.data.data!;
+        } else {
+            // Backward compatible with single devisId
+            const res = await api.post<ApiResponse<Invoice>>(`/invoices/from-devis/${devisIds}`);
+            return res.data.data!;
+        }
     },
 
     downloadPdf: async (invoiceId: string): Promise<Blob> => {

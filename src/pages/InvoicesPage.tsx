@@ -5,21 +5,28 @@ import {
   Download,
   Clock,
   FileText,
-  ExternalLink,
   DollarSign,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { PaymentModal } from '../components/PaymentModal';
-import { invoicesApi, devisApi, paymentsApi } from '../services';
-import type { Devis } from '../types';
+import { invoicesApi, paymentsApi } from '../services';
 import './InvoicesPage.css';
 
 interface InvoiceWithDevis {
   id: string;
   reference: string;
+  totalAmount: number;
   pdfUrl?: string;
   createdAt: string;
-  devis: Devis;
+  client: {
+    id: string;
+    name: string;
+  };
+  devis: {
+    id: string;
+    reference: string;
+    totalAmount: number;
+  }[];
   paymentStats?: {
     totalPaid: number;
     remaining: number;
@@ -38,31 +45,33 @@ export function InvoicesPage() {
 
   const fetchInvoices = async () => {
     try {
-      const devisList = await devisApi.getAll({ status: 'INVOICED' });
+      const invoicesList = await invoicesApi.getAll();
       const invoicesData: InvoiceWithDevis[] = await Promise.all(
-        devisList
-          .filter((d) => d.invoice)
-          .map(async (d) => {
-            try {
-              const stats = await paymentsApi.getStats(d.invoice!.id);
-              return {
-                id: d.invoice!.id,
-                reference: d.invoice!.reference,
-                pdfUrl: d.invoice!.pdfUrl,
-                createdAt: d.invoice!.createdAt,
-                devis: d,
-                paymentStats: stats,
-              };
-            } catch {
-              return {
-                id: d.invoice!.id,
-                reference: d.invoice!.reference,
-                pdfUrl: d.invoice!.pdfUrl,
-                createdAt: d.invoice!.createdAt,
-                devis: d,
-              };
-            }
-          })
+        invoicesList.map(async (invoice) => {
+          try {
+            const stats = await paymentsApi.getStats(invoice.id);
+            return {
+              id: invoice.id,
+              reference: invoice.reference,
+              totalAmount: invoice.totalAmount,
+              pdfUrl: invoice.pdfUrl,
+              createdAt: invoice.createdAt,
+              client: invoice.client!,
+              devis: invoice.devis || [],
+              paymentStats: stats,
+            };
+          } catch {
+            return {
+              id: invoice.id,
+              reference: invoice.reference,
+              totalAmount: invoice.totalAmount,
+              pdfUrl: invoice.pdfUrl,
+              createdAt: invoice.createdAt,
+              client: invoice.client!,
+              devis: invoice.devis || [],
+            };
+          }
+        })
       );
       setInvoices(invoicesData);
       setError(null);
@@ -83,8 +92,8 @@ export function InvoicesPage() {
     return invoices.filter(
       (inv) =>
         inv.reference.toLowerCase().includes(query) ||
-        inv.devis.client.name.toLowerCase().includes(query) ||
-        inv.devis.reference.toLowerCase().includes(query)
+        inv.client.name.toLowerCase().includes(query) ||
+        inv.devis.some(d => d.reference.toLowerCase().includes(query))
     );
   }, [invoices, searchQuery]);
 
@@ -109,7 +118,7 @@ export function InvoicesPage() {
   };
 
   const totalRevenue = useMemo(() => {
-    return invoices.reduce((sum, inv) => sum + Number(inv.devis.totalAmount), 0);
+    return invoices.reduce((sum, inv) => sum + Number(inv.totalAmount), 0);
   }, [invoices]);
 
   const totalPaid = useMemo(() => {
@@ -117,7 +126,7 @@ export function InvoicesPage() {
   }, [invoices]);
 
   const totalRemaining = useMemo(() => {
-    return invoices.reduce((sum, inv) => sum + (inv.paymentStats?.remaining || Number(inv.devis.totalAmount)), 0);
+    return invoices.reduce((sum, inv) => sum + (inv.paymentStats?.remaining || Number(inv.totalAmount)), 0);
   }, [invoices]);
 
   if (loading) {
@@ -224,14 +233,18 @@ export function InvoicesPage() {
                         </div>
                       </td>
                       <td>
-                        <a href="#" className="devis-link">
-                          {invoice.devis.reference}
-                          <ExternalLink size={12} />
-                        </a>
+                        <div className="devis-references">
+                          {invoice.devis.map((d, idx) => (
+                            <span key={d.id} className="devis-ref-tag">
+                              {d.reference}
+                              {idx < invoice.devis.length - 1 && ', '}
+                            </span>
+                          ))}
+                        </div>
                       </td>
-                      <td>{invoice.devis.client.name}</td>
+                      <td>{invoice.client.name}</td>
                       <td className="font-medium">
-                        {Number(invoice.devis.totalAmount).toFixed(2)} TND
+                        {Number(invoice.totalAmount).toFixed(2)} TND
                       </td>
                       <td>
                         {invoice.paymentStats ? (
@@ -302,7 +315,7 @@ export function InvoicesPage() {
           <PaymentModal
             invoiceId={selectedInvoice.id}
             invoiceReference={selectedInvoice.reference}
-            totalAmount={Number(selectedInvoice.devis.totalAmount)}
+            totalAmount={Number(selectedInvoice.totalAmount)}
             onClose={() => setSelectedInvoice(null)}
             onSuccess={() => {
               fetchInvoices();

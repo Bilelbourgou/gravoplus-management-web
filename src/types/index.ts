@@ -77,6 +77,7 @@ export interface Devis {
     createdBy: Pick<User, 'id' | 'firstName' | 'lastName'>;
     lines: DevisLine[];
     services: DevisServiceItem[];
+    invoiceId?: string;
     invoice?: Invoice;
 }
 
@@ -105,9 +106,12 @@ export interface DevisServiceItem {
 export interface Invoice {
     id: string;
     reference: string;
+    totalAmount: number;
     pdfUrl?: string;
     createdAt: string;
-    devisId: string;
+    clientId: string;
+    client?: Client;
+    devis?: Devis[];
 }
 
 export interface Payment {

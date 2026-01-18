@@ -15,9 +15,11 @@ import {
   Download,
 } from 'lucide-react';
 import { Header } from '../components/layout';
+import { CreateInvoiceModal } from '../components/CreateInvoiceModal';
 import { devisApi, clientsApi, servicesApi, materialsApi, invoicesApi } from '../services';
 import type { Devis, Client, DevisStatus, MachineType, FixedService, Material, AddDevisLineFormData } from '../types';
 import './DevisPage.css';
+import '../components/CreateInvoiceModal.css';
 
 const STATUS_LABELS: Record<DevisStatus, string> = {
   DRAFT: 'Brouillon',
@@ -588,6 +590,7 @@ export function DevisPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedDevis, setSelectedDevis] = useState<Devis | null>(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -686,6 +689,12 @@ export function DevisPage() {
     await invoicesApi.createFromDevis(devisId);
   };
 
+  const handleBatchInvoiceSuccess = () => {
+    fetchData();
+  };
+
+  const validatedDevis = devisList.filter(d => d.status === 'VALIDATED');
+
   if (loading) {
     return (
       <div className="page-loading">
@@ -751,6 +760,12 @@ export function DevisPage() {
                 </div>
               )}
             </div>
+            {validatedDevis.length > 0 && (
+              <button className="btn btn-success" onClick={() => setShowInvoiceModal(true)}>
+                <Receipt size={20} />
+                Créer facture ({validatedDevis.length})
+              </button>
+            )}
             <button className="btn btn-primary" onClick={() => setShowCreateModal(true)}>
               <Plus size={20} />
               Nouveau devis
@@ -860,6 +875,14 @@ export function DevisPage() {
           onCancel={handleCancel}
           onCreateInvoice={handleCreateInvoice}
           onRefresh={handleRefresh}
+        />
+      )}
+
+      {showInvoiceModal && (
+        <CreateInvoiceModal
+          availableDevis={validatedDevis}
+          onClose={() => setShowInvoiceModal(false)}
+          onSuccess={handleBatchInvoiceSuccess}
         />
       )}
     </>

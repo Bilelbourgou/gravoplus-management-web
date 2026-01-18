@@ -88,6 +88,24 @@
   font-weight: 400;
 }
 
+/* Devis References */
+.devis-references {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.devis-ref-tag {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  color: var(--color-primary-400);
+  background: rgba(99, 102, 241, 0.1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
 /* Table Date Cell */
 .table-date {
   display: inline-flex;
