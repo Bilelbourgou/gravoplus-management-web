@@ -15,12 +15,11 @@
 }
 
 .payment-progress-mini {
-  flex: 1;
+  width: 80px;
   height: 6px;
   background: var(--color-bg-secondary);
   border-radius: 3px;
   overflow: hidden;
-  min-width: 60px;
 }
 
 .payment-progress-bar {

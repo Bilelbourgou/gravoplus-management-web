@@ -137,6 +137,10 @@ export const devisApi = {
         const res = await api.put<ApiResponse<Devis>>(`/devis/${id}`, { notes });
         return res.data.data!;
     },
+
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`/devis/${id}`);
+    },
 };
 
 // ==================== Invoices ====================
@@ -162,6 +166,10 @@ export const invoicesApi = {
     downloadPdf: async (invoiceId: string): Promise<Blob> => {
         const res = await api.get(`/invoices/${invoiceId}/pdf`, { responseType: 'blob' });
         return res.data;
+    },
+
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`/invoices/${id}`);
     },
 };
 

@@ -150,7 +150,6 @@ interface DevisDetailModalProps {
   onRemoveService: (devisId: string, serviceId: string) => Promise<void>;
   onValidate: (devisId: string) => Promise<void>;
   onCancel: (devisId: string) => Promise<void>;
-  onCreateInvoice: (devisId: string) => Promise<void>;
   onRefresh: () => void;
 }
 
@@ -165,7 +164,6 @@ function DevisDetailModal({
   onRemoveService,
   onValidate,
   onCancel,
-  onCreateInvoice,
   onRefresh,
 }: DevisDetailModalProps) {
   const [activeTab, setActiveTab] = useState<'lines' | 'services'>('lines');
@@ -240,18 +238,6 @@ function DevisDetailModal({
     setLoading(true);
     try {
       await onCancel(devis.id);
-      onRefresh();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCreateInvoice = async () => {
-    setLoading(true);
-    try {
-      await onCreateInvoice(devis.id);
       onRefresh();
     } catch (err) {
       console.error(err);
@@ -540,12 +526,6 @@ function DevisDetailModal({
               </button>
             </>
           )}
-          {devis.status === 'VALIDATED' && (
-            <button className="btn btn-primary" onClick={handleCreateInvoice} disabled={loading}>
-              <Receipt size={18} />
-              Créer la facture
-            </button>
-          )}
           {devis.status === 'INVOICED' && devis.invoice && (
             <div className="invoice-details">
               <div className="invoice-info">
@@ -685,15 +665,25 @@ export function DevisPage() {
     await devisApi.cancel(devisId);
   };
 
-  const handleCreateInvoice = async (devisId: string) => {
-    await invoicesApi.createFromDevis(devisId);
+  const handleDelete = async (devisId: string, reference: string) => {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer le devis ${reference} ? Cette action est irréversible.`)) {
+      return;
+    }
+
+    try {
+      await devisApi.delete(devisId);
+      await fetchData();
+      setSelectedDevis(null);
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Erreur lors de la suppression du devis');
+    }
   };
 
   const handleBatchInvoiceSuccess = () => {
     fetchData();
   };
 
-  const validatedDevis = devisList.filter(d => d.status === 'VALIDATED');
+  const validatedDevis = devisList.filter(d => d.status === 'VALIDATED' && !d.invoice);
 
   if (loading) {
     return (
@@ -819,13 +809,27 @@ export function DevisPage() {
                         </span>
                       </td>
                       <td>
-                        <button
-                          className="btn btn-ghost btn-icon"
-                          onClick={() => handleViewDevis(devis)}
-                          title="Voir les détails"
-                        >
-                          <Eye size={18} />
-                        </button>
+                        <div className="action-buttons">
+                          <button
+                            className="btn btn-ghost btn-icon"
+                            onClick={() => handleViewDevis(devis)}
+                            title="Voir les détails"
+                          >
+                            <Eye size={18} />
+                          </button>
+                          {devis.status !== 'INVOICED' && !devis.invoice && (
+                            <button
+                              className="btn btn-ghost btn-icon text-danger"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(devis.id, devis.reference);
+                              }}
+                              title="Supprimer"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -873,7 +877,6 @@ export function DevisPage() {
           onRemoveService={handleRemoveService}
           onValidate={handleValidate}
           onCancel={handleCancel}
-          onCreateInvoice={handleCreateInvoice}
           onRefresh={handleRefresh}
         />
       )}

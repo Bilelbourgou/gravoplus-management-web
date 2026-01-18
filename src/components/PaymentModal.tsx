@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, DollarSign, Calendar, CreditCard, FileText, Trash2, Plus } from 'lucide-react';
 import { paymentsApi } from '../services';
 import './PaymentModal.css';
@@ -28,7 +28,7 @@ interface PaymentStats {
   isPaid: boolean;
 }
 
-export function PaymentModal({ invoiceId, invoiceReference, totalAmount, onClose, onSuccess }: PaymentModalProps) {
+export function PaymentModal({ invoiceId, invoiceReference, onClose, onSuccess }: PaymentModalProps) {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [stats, setStats] = useState<PaymentStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,7 @@ export function PaymentModal({ invoiceId, invoiceReference, totalAmount, onClose
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
       const [paymentsData, statsData] = await Promise.all([
@@ -54,15 +54,16 @@ export function PaymentModal({ invoiceId, invoiceReference, totalAmount, onClose
       setStats(statsData);
       setError(null);
     } catch (err) {
+      console.error('Error fetching payment data:', err);
       setError(err instanceof Error ? err.message : 'Erreur de chargement');
     } finally {
       setLoading(false);
     }
-  };
+  }, [invoiceId]);
 
   useEffect(() => {
     fetchData();
-  }, [invoiceId]);
+  }, [fetchData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,19 +135,19 @@ export function PaymentModal({ invoiceId, invoiceReference, totalAmount, onClose
                 <div className="payment-summary">
                   <div className="summary-card">
                     <div className="summary-label">Montant total</div>
-                    <div className="summary-value">{stats.totalAmount.toFixed(2)} TND</div>
+                    <div className="summary-value">{Number(stats.totalAmount || 0).toFixed(2)} TND</div>
                   </div>
                   <div className="summary-card">
                     <div className="summary-label">Déjà payé</div>
-                    <div className="summary-value success">{stats.totalPaid.toFixed(2)} TND</div>
+                    <div className="summary-value success">{Number(stats.totalPaid || 0).toFixed(2)} TND</div>
                   </div>
                   <div className="summary-card">
                     <div className="summary-label">Reste à payer</div>
-                    <div className="summary-value warning">{stats.remaining.toFixed(2)} TND</div>
+                    <div className="summary-value warning">{Number(stats.remaining || 0).toFixed(2)} TND</div>
                   </div>
                   <div className="summary-card">
                     <div className="summary-label">Pourcentage</div>
-                    <div className="summary-value">{stats.percentPaid.toFixed(1)}%</div>
+                    <div className="summary-value">{Number(stats.percentPaid || 0).toFixed(1)}%</div>
                   </div>
                 </div>
               )}
@@ -167,7 +168,7 @@ export function PaymentModal({ invoiceId, invoiceReference, totalAmount, onClose
               <div className="payments-section">
                 <div className="section-header">
                   <h3>Historique des paiements ({payments.length})</h3>
-                  {!showAddForm && stats && stats.remaining > 0 && (
+                  {!showAddForm && stats && Number(stats.remaining || 0) > 0 && (
                     <button 
                       className="btn btn-primary btn-sm"
                       onClick={() => setShowAddForm(true)}

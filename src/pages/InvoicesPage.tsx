@@ -6,6 +6,7 @@ import {
   Clock,
   FileText,
   DollarSign,
+  Trash2,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { PaymentModal } from '../components/PaymentModal';
@@ -117,6 +118,20 @@ export function InvoicesPage() {
     }
   };
 
+  const handleDelete = async (invoiceId: string, reference: string) => {
+    if (!confirm(`Êtes-vous sûr de vouloir supprimer la facture ${reference} ? Cette action est irréversible et remettra les devis associés en état "Validé".`)) {
+      return;
+    }
+
+    try {
+      await invoicesApi.delete(invoiceId);
+      await fetchInvoices();
+      setSelectedInvoice(null);
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Erreur lors de la suppression de la facture');
+    }
+  };
+
   const totalRevenue = useMemo(() => {
     return invoices.reduce((sum, inv) => sum + Number(inv.totalAmount), 0);
   }, [invoices]);
@@ -215,7 +230,6 @@ export function InvoicesPage() {
                 <thead>
                   <tr>
                     <th>Référence</th>
-                    <th>Devis</th>
                     <th>Client</th>
                     <th>Montant</th>
                     <th>Statut paiement</th>
@@ -232,21 +246,11 @@ export function InvoicesPage() {
                           <span className="font-medium">{invoice.reference}</span>
                         </div>
                       </td>
-                      <td>
-                        <div className="devis-references">
-                          {invoice.devis.map((d, idx) => (
-                            <span key={d.id} className="devis-ref-tag">
-                              {d.reference}
-                              {idx < invoice.devis.length - 1 && ', '}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
                       <td>{invoice.client.name}</td>
                       <td className="font-medium">
                         {Number(invoice.totalAmount).toFixed(2)} TND
                       </td>
-                      <td>
+                      <td style={{ textAlign: 'center' }}>
                         {invoice.paymentStats ? (
                           <div className="payment-status">
                             <div className="payment-progress-mini">
@@ -291,6 +295,15 @@ export function InvoicesPage() {
                             )}
                             PDF
                           </button>
+                          {(!invoice.paymentStats || invoice.paymentStats.totalPaid === 0) && (
+                            <button
+                              className="btn btn-danger btn-sm"
+                              onClick={() => handleDelete(invoice.id, invoice.reference)}
+                              title="Supprimer"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
