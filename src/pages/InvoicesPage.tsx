@@ -250,9 +250,11 @@ export function InvoicesPage() {
                           <span className="payment-badge unpaid">Non payé</span>
                         )}
                       </td>
-                      <td className="flex items-center gap-2 text-muted">
-                        <Clock size={14} />
-                        {new Date(invoice.createdAt).toLocaleDateString('fr-FR')}
+                      <td>
+                        <span className="table-date">
+                          <Clock size={14} />
+                          {new Date(invoice.createdAt).toLocaleDateString('fr-FR')}
+                        </span>
                       </td>
                       <td>
                         <div className="action-buttons">

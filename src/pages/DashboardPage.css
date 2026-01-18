@@ -123,3 +123,11 @@
 .no-data p {
   font-size: var(--text-sm);
 }
+
+/* Table Date Cell */
+.table-date {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+}

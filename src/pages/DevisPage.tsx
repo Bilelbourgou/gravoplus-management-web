@@ -776,6 +776,7 @@ export function DevisPage() {
                   <tr>
                     <th>Référence</th>
                     <th>Client</th>
+                    <th>Employé</th>
                     <th>Montant</th>
                     <th>Statut</th>
                     <th>Date</th>
@@ -787,15 +788,20 @@ export function DevisPage() {
                     <tr key={devis.id}>
                       <td className="font-medium">{devis.reference}</td>
                       <td>{devis.client.name}</td>
+                      <td className="text-muted">
+                        {devis.createdBy.firstName} {devis.createdBy.lastName}
+                      </td>
                       <td>{Number(devis.totalAmount).toFixed(2)} TND</td>
                       <td>
                         <span className={`badge badge-${devis.status.toLowerCase()}`}>
                           {STATUS_LABELS[devis.status]}
                         </span>
                       </td>
-                      <td className="flex items-center gap-2 text-muted">
-                        <Clock size={14} />
-                        {new Date(devis.createdAt).toLocaleDateString('fr-FR')}
+                      <td>
+                        <span className="table-date">
+                          <Clock size={14} />
+                          {new Date(devis.createdAt).toLocaleDateString('fr-FR')}
+                        </span>
                       </td>
                       <td>
                         <button

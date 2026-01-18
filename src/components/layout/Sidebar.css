@@ -170,6 +170,11 @@
   margin-top: var(--space-1);
 }
 
+.sidebar.collapsed .user-info {
+  justify-content: center;
+  padding: var(--space-2);
+}
+
 .sidebar.collapsed .user-details {
   display: none;
 }

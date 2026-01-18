@@ -10,6 +10,7 @@
 .payment-status {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.75rem;
 }
 
@@ -85,4 +86,12 @@
 .currency {
   font-size: var(--text-lg);
   font-weight: 400;
+}
+
+/* Table Date Cell */
+.table-date {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
 }

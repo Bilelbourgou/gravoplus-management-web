@@ -259,9 +259,11 @@ export function DashboardPage() {
                             {STATUS_LABELS[devis.status]}
                           </span>
                         </td>
-                        <td className="flex items-center gap-2 text-muted">
-                          <Clock size={14} />
-                          {new Date(devis.createdAt).toLocaleDateString('fr-FR')}
+                        <td>
+                          <span className="table-date">
+                            <Clock size={14} />
+                            {new Date(devis.createdAt).toLocaleDateString('fr-FR')}
+                          </span>
                         </td>
                       </tr>
                     ))}

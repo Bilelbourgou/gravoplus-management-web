@@ -356,6 +356,14 @@
   margin-top: var(--space-1);
 }
 
+/* Table Date Cell */
+.table-date {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text-muted);
+}
+
 @media (max-width: 768px) {
   .actions-right {
     flex-direction: column;
