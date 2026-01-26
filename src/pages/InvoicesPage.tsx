@@ -141,7 +141,7 @@ export function InvoicesPage() {
   }, [invoices]);
 
   const totalRemaining = useMemo(() => {
-    return invoices.reduce((sum, inv) => sum + (inv.paymentStats?.remaining || Number(inv.totalAmount)), 0);
+    return invoices.reduce((sum, inv) => sum + (inv.paymentStats ? inv.paymentStats.remaining : Number(inv.totalAmount)), 0);
   }, [invoices]);
 
   if (loading) {

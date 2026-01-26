@@ -15,6 +15,7 @@ import type {
     CreateDevisFormData,
     AddDevisLineFormData,
     MachineType,
+    ClientBalanceData,
 } from '../types';
 
 // ==================== Auth ====================
@@ -69,6 +70,11 @@ export const clientsApi = {
 
     getById: async (id: string): Promise<Client> => {
         const res = await api.get<ApiResponse<Client>>(`/clients/${id}`);
+        return res.data.data!;
+    },
+
+    getBalance: async (id: string): Promise<ClientBalanceData> => {
+        const res = await api.get<ApiResponse<ClientBalanceData>>(`/clients/${id}/balance`);
         return res.data.data!;
     },
 
@@ -151,20 +157,25 @@ export const invoicesApi = {
         return res.data.data!;
     },
 
-    createFromDevis: async (devisIds: string | string[]): Promise<Invoice> => {
-        // Support both single devis and multiple devis
-        if (Array.isArray(devisIds)) {
-            const res = await api.post<ApiResponse<Invoice>>('/invoices/from-devis', { devisIds });
-            return res.data.data!;
-        } else {
-            // Backward compatible with single devisId
-            const res = await api.post<ApiResponse<Invoice>>(`/invoices/from-devis/${devisIds}`);
-            return res.data.data!;
-        }
+    getById: async (id: string): Promise<Invoice> => {
+        const res = await api.get<ApiResponse<Invoice>>(`/invoices/${id}`);
+        return res.data.data!;
     },
 
-    downloadPdf: async (invoiceId: string): Promise<Blob> => {
-        const res = await api.get(`/invoices/${invoiceId}/pdf`, { responseType: 'blob' });
+    createDirect: async (clientId: string, items: { description: string; quantity: number; unitPrice: number }[]): Promise<Invoice> => {
+        const res = await api.post<ApiResponse<Invoice>>('/invoices/direct', { clientId, items });
+        return res.data.data!;
+    },
+
+    createFromDevis: async (devisIds: string[]): Promise<Invoice> => {
+        const res = await api.post<ApiResponse<Invoice>>('/invoices/from-devis', { devisIds });
+        return res.data.data!;
+    },
+
+    downloadPdf: async (id: string): Promise<Blob> => {
+        const res = await api.get(`/invoices/${id}/pdf`, {
+            responseType: 'blob',
+        });
         return res.data;
     },
 

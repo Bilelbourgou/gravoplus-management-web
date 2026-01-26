@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   FileText,
   Plus,
@@ -39,10 +40,11 @@ interface CreateDevisModalProps {
   clients: Client[];
   onClose: () => void;
   onSave: (clientId: string, notes?: string) => Promise<void>;
+  preSelectedClientId?: string;
 }
 
-function CreateDevisModal({ clients, onClose, onSave }: CreateDevisModalProps) {
-  const [clientId, setClientId] = useState('');
+function CreateDevisModal({ clients, onClose, onSave, preSelectedClientId }: CreateDevisModalProps) {
+  const [clientId, setClientId] = useState(preSelectedClientId || '');
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -559,6 +561,7 @@ function DevisDetailModal({
 }
 
 export function DevisPage() {
+  const [searchParams] = useSearchParams();
   const [devisList, setDevisList] = useState<Devis[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
@@ -571,6 +574,7 @@ export function DevisPage() {
   const [selectedDevis, setSelectedDevis] = useState<Devis | null>(null);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+  const [preSelectedClientId, setPreSelectedClientId] = useState<string | undefined>(undefined);
 
   const fetchData = async () => {
     try {
@@ -615,6 +619,14 @@ export function DevisPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    const clientId = searchParams.get('clientId');
+    if (clientId && !showCreateModal) {
+      setPreSelectedClientId(clientId);
+      setShowCreateModal(true);
+    }
+  }, [searchParams]);
 
   const filteredDevis = useMemo(() => {
     let result = devisList;
@@ -860,8 +872,12 @@ export function DevisPage() {
       {showCreateModal && (
         <CreateDevisModal
           clients={clients}
-          onClose={() => setShowCreateModal(false)}
+          onClose={() => {
+            setShowCreateModal(false);
+            setPreSelectedClientId(undefined);
+          }}
           onSave={handleCreate}
+          preSelectedClientId={preSelectedClientId}
         />
       )}
 

@@ -218,3 +218,49 @@ export interface AddDevisLineFormData {
     quantity?: number;
     materialId?: string;
 }
+
+export interface ClientBalancePayment {
+    id: string;
+    amount: number;
+    paymentDate: string;
+    paymentMethod?: string;
+    reference?: string;
+    notes?: string;
+}
+
+export interface ClientBalanceInvoice {
+    id: string;
+    reference: string;
+    totalAmount: number;
+    paidAmount: number;
+    balance: number;
+    createdAt: string;
+    devisCount: number;
+    payments: ClientBalancePayment[];
+}
+
+export interface ClientBalancePendingDevis {
+    id: string;
+    reference: string;
+    status: string;
+    totalAmount: number;
+    createdAt: string;
+}
+
+export interface ClientBalanceData {
+    client: {
+        id: string;
+        name: string;
+        phone?: string;
+        email?: string;
+    };
+    summary: {
+        totalInvoiced: number;
+        totalPaid: number;
+        outstandingBalance: number;
+        pendingDevisTotal: number;
+        pendingDevisCount: number;
+    };
+    invoices: ClientBalanceInvoice[];
+    pendingDevis: ClientBalancePendingDevis[];
+}
