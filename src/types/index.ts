@@ -147,9 +147,12 @@ export interface CreatePaymentFormData {
 
 export interface DashboardStats {
     totalClients: number;
+    totalEmployees: number;
     totalDevis: number;
     totalInvoices: number;
     totalRevenue: number;
+    totalExpenses: number;
+    netProfit: number;
     devisByStatus: {
         draft: number;
         validated: number;
@@ -168,6 +171,11 @@ export interface DashboardStats {
         month: string;
         revenue: number;
     }[];
+    monthlyExpenses: {
+        month: string;
+        expenses: number;
+    }[];
+    expensesByCategory: Record<string, number>;
 }
 
 export interface AuthResponse {
@@ -263,4 +271,70 @@ export interface ClientBalanceData {
     };
     invoices: ClientBalanceInvoice[];
     pendingDevis: ClientBalancePendingDevis[];
+}
+
+export type ExpenseCategory = 
+    | 'Matériel'
+    | 'Fournitures'
+    | 'Transport'
+    | 'Maintenance'
+    | 'Salaires'
+    | 'Loyer'
+    | 'Électricité'
+    | 'Autre';
+
+export interface Expense {
+    id: string;
+    description: string;
+    amount: number;
+    category: ExpenseCategory;
+    date: string;
+    reference?: string;
+    notes?: string;
+    createdAt: string;
+    updatedAt: string;
+    createdById: string;
+    createdBy: Pick<User, 'id' | 'firstName' | 'lastName'>;
+}
+
+export interface CreateExpenseFormData {
+    description: string;
+    amount: number;
+    category: ExpenseCategory;
+    date?: string;
+    reference?: string;
+    notes?: string;
+}
+
+export interface ExpenseStats {
+    totalAmount: number;
+    count: number;
+    byCategory: Record<string, number>;
+}
+
+export type NotificationType = 
+    | 'CLIENT_CREATED'
+    | 'CLIENT_UPDATED'
+    | 'CLIENT_DELETED'
+    | 'DEVIS_CREATED'
+    | 'DEVIS_VALIDATED'
+    | 'DEVIS_CANCELLED'
+    | 'INVOICE_CREATED'
+    | 'PAYMENT_RECEIVED'
+    | 'EXPENSE_CREATED'
+    | 'EXPENSE_DELETED'
+    | 'EMPLOYEE_CREATED'
+    | 'EMPLOYEE_UPDATED';
+
+export interface Notification {
+    id: string;
+    type: NotificationType;
+    title: string;
+    message: string;
+    entityType?: string;
+    entityId?: string;
+    isRead: boolean;
+    createdAt: string;
+    triggeredById?: string;
+    triggeredBy?: Pick<User, 'id' | 'firstName' | 'lastName'>;
 }

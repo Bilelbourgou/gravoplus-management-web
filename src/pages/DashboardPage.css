@@ -42,6 +42,63 @@
   color: var(--text-muted);
 }
 
+/* Financial Stats */
+.financial-stats {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.financial-stats .stat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.financial-stats .stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.financial-stats .stat-card.income::before {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.financial-stats .stat-card.expenses::before {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.financial-stats .stat-card.profit.positive::before {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.financial-stats .stat-card.profit.negative::before {
+  background: linear-gradient(90deg, #ef4444, #dc2626);
+}
+
+.stat-icon.red {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.stat-icon.purple {
+  background: rgba(139, 92, 246, 0.15);
+  color: #8b5cf6;
+}
+
+@media (max-width: 1200px) {
+  .financial-stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .financial-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Charts Row */
 .charts-row {
   display: grid;

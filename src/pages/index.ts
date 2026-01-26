@@ -6,3 +6,4 @@ export { MachinesPage } from './MachinesPage';
 export { DevisPage } from './DevisPage';
 export { InvoicesPage } from './InvoicesPage';
 export { SettingsPage } from './SettingsPage';
+export { ExpensesPage } from './ExpensesPage';

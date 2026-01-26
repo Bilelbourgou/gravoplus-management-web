@@ -10,7 +10,8 @@ import {
   MachinesPage, 
   DevisPage, 
   InvoicesPage, 
-  SettingsPage 
+  SettingsPage,
+  ExpensesPage 
 } from './pages';
 import './App.css';
 
@@ -64,6 +65,7 @@ function App() {
               <Route path="/machines" element={<MachinesPage />} />
               <Route path="/devis" element={<DevisPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
+              <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>

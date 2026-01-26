@@ -1,9 +1,12 @@
 import { useEffect, useState } from 'react';
 import {
   Users,
+  UserCog,
   FileText,
   Receipt,
   TrendingUp,
+  TrendingDown,
+  Wallet,
   ArrowUpRight,
   Clock,
 } from 'lucide-react';
@@ -92,6 +95,33 @@ export function DashboardPage() {
       <Header title="Tableau de bord" subtitle="Vue d'ensemble de votre activité" />
       
       <div className="dashboard-content">
+        {/* Financial Stats Cards */}
+        <div className="stats-grid financial-stats">
+          <div className="stat-card income">
+            <div className="stat-icon green">
+              <TrendingUp size={24} />
+            </div>
+            <div className="stat-value">{stats.totalRevenue.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-label">Revenus</div>
+          </div>
+
+          <div className="stat-card expenses">
+            <div className="stat-icon red">
+              <TrendingDown size={24} />
+            </div>
+            <div className="stat-value">{stats.totalExpenses.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-label">Dépenses</div>
+          </div>
+
+          <div className={`stat-card profit ${stats.netProfit >= 0 ? 'positive' : 'negative'}`}>
+            <div className={`stat-icon ${stats.netProfit >= 0 ? 'green' : 'red'}`}>
+              <Wallet size={24} />
+            </div>
+            <div className="stat-value">{stats.netProfit.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-label">Bénéfice net</div>
+          </div>
+        </div>
+
         {/* Stats Cards */}
         <div className="stats-grid">
           <div className="stat-card">
@@ -100,6 +130,14 @@ export function DashboardPage() {
             </div>
             <div className="stat-value">{stats.totalClients}</div>
             <div className="stat-label">Clients</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon purple">
+              <UserCog size={24} />
+            </div>
+            <div className="stat-value">{stats.totalEmployees}</div>
+            <div className="stat-label">Employés</div>
           </div>
 
           <div className="stat-card">
@@ -117,26 +155,22 @@ export function DashboardPage() {
             <div className="stat-value">{stats.totalInvoices}</div>
             <div className="stat-label">Factures</div>
           </div>
-
-          <div className="stat-card">
-            <div className="stat-icon blue">
-              <TrendingUp size={24} />
-            </div>
-            <div className="stat-value">{stats.totalRevenue.toFixed(2)} <span className="currency">TND</span></div>
-            <div className="stat-label">Chiffre d'affaires</div>
-          </div>
         </div>
 
         {/* Charts Row */}
         <div className="charts-row">
-          {/* Revenue Chart */}
+          {/* Revenue vs Expenses Chart */}
           <div className="card chart-card">
             <div className="card-header">
-              <h3>Revenus mensuels</h3>
+              <h3>Revenus vs Dépenses (6 derniers mois)</h3>
             </div>
             <div className="card-body chart-container">
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={stats.monthlyRevenue}>
+                <BarChart data={stats.monthlyRevenue.map((r, i) => ({
+                  month: r.month,
+                  revenue: r.revenue,
+                  expenses: stats.monthlyExpenses[i]?.expenses || 0,
+                }))}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                   <XAxis 
                     dataKey="month" 
@@ -155,17 +189,31 @@ export function DashboardPage() {
                       borderRadius: '8px',
                     }}
                     labelStyle={{ color: '#f8fafc' }}
-                    formatter={(value) => [`${(value as number).toFixed(2)} TND`, 'Revenu']}
+                    formatter={(value, name) => [
+                      `${(value as number).toFixed(2)} TND`,
+                      name === 'revenue' ? 'Revenus' : 'Dépenses'
+                    ]}
                   />
                   <Bar 
                     dataKey="revenue" 
-                    fill="url(#barGradient)"
+                    fill="url(#revenueGradient)"
                     radius={[4, 4, 0, 0]}
+                    name="revenue"
+                  />
+                  <Bar 
+                    dataKey="expenses" 
+                    fill="url(#expenseGradient)"
+                    radius={[4, 4, 0, 0]}
+                    name="expenses"
                   />
                   <defs>
-                    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#6366f1" />
-                      <stop offset="100%" stopColor="#4f46e5" />
+                    <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#22c55e" />
+                      <stop offset="100%" stopColor="#16a34a" />
+                    </linearGradient>
+                    <linearGradient id="expenseGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#ef4444" />
+                      <stop offset="100%" stopColor="#dc2626" />
                     </linearGradient>
                   </defs>
                 </BarChart>

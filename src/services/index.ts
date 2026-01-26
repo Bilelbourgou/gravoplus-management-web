@@ -16,6 +16,10 @@ import type {
     AddDevisLineFormData,
     MachineType,
     ClientBalanceData,
+    Expense,
+    CreateExpenseFormData,
+    ExpenseStats,
+    Notification,
 } from '../types';
 
 // ==================== Auth ====================
@@ -283,5 +287,71 @@ export const dashboardApi = {
     getStats: async (): Promise<DashboardStats> => {
         const res = await api.get<ApiResponse<DashboardStats>>('/dashboard/stats');
         return res.data.data!;
+    },
+};
+
+// ==================== Expenses ====================
+
+export const expensesApi = {
+    getAll: async (filters?: { category?: string; startDate?: string; endDate?: string }): Promise<Expense[]> => {
+        const res = await api.get<ApiResponse<Expense[]>>('/expenses', { params: filters });
+        return res.data.data!;
+    },
+
+    getById: async (id: string): Promise<Expense> => {
+        const res = await api.get<ApiResponse<Expense>>(`/expenses/${id}`);
+        return res.data.data!;
+    },
+
+    getStats: async (startDate?: string, endDate?: string): Promise<ExpenseStats> => {
+        const res = await api.get<ApiResponse<ExpenseStats>>('/expenses/stats', {
+            params: { startDate, endDate },
+        });
+        return res.data.data!;
+    },
+
+    create: async (data: CreateExpenseFormData): Promise<Expense> => {
+        const res = await api.post<ApiResponse<Expense>>('/expenses', data);
+        return res.data.data!;
+    },
+
+    update: async (id: string, data: Partial<CreateExpenseFormData>): Promise<Expense> => {
+        const res = await api.put<ApiResponse<Expense>>(`/expenses/${id}`, data);
+        return res.data.data!;
+    },
+
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`/expenses/${id}`);
+    },
+};
+
+// ==================== Notifications ====================
+
+export const notificationsApi = {
+    getAll: async (limit?: number): Promise<Notification[]> => {
+        const res = await api.get<ApiResponse<Notification[]>>('/notifications', { params: { limit } });
+        return res.data.data!;
+    },
+
+    getUnread: async (): Promise<Notification[]> => {
+        const res = await api.get<ApiResponse<Notification[]>>('/notifications/unread');
+        return res.data.data!;
+    },
+
+    getUnreadCount: async (): Promise<number> => {
+        const res = await api.get<ApiResponse<{ count: number }>>('/notifications/count');
+        return res.data.data!.count;
+    },
+
+    markAsRead: async (id: string): Promise<void> => {
+        await api.put(`/notifications/${id}/read`);
+    },
+
+    markAllAsRead: async (): Promise<void> => {
+        await api.put('/notifications/read-all');
+    },
+
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`/notifications/${id}`);
     },
 };

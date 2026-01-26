@@ -10,6 +10,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Wallet,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useAuthStore } from '../../store/auth.store';
@@ -22,6 +23,7 @@ const navItems = [
   { path: '/machines', icon: Cpu, label: 'Machines' },
   { path: '/devis', icon: FileText, label: 'Devis' },
   { path: '/invoices', icon: Receipt, label: 'Factures' },
+  { path: '/expenses', icon: Wallet, label: 'Dépenses', adminOnly: true },
   { path: '/settings', icon: Settings, label: 'Paramètres' },
 ];
 
@@ -47,19 +49,21 @@ export function Sidebar() {
       </div>
 
       <nav className="sidebar-nav">
-        {navItems.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              `nav-link ${isActive || (item.path !== '/' && location.pathname.startsWith(item.path)) ? 'active' : ''}`
-            }
-            end={item.path === '/'}
-          >
-            <item.icon size={20} />
-            {!collapsed && <span>{item.label}</span>}
-          </NavLink>
-        ))}
+        {navItems
+          .filter((item) => !('adminOnly' in item) || !item.adminOnly || user?.role === 'ADMIN')
+          .map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                `nav-link ${isActive || (item.path !== '/' && location.pathname.startsWith(item.path)) ? 'active' : ''}`
+              }
+              end={item.path === '/'}
+            >
+              <item.icon size={20} />
+              {!collapsed && <span>{item.label}</span>}
+            </NavLink>
+          ))}
       </nav>
 
       <div className="sidebar-footer">

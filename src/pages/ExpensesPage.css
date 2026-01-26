@@ -1,0 +1,246 @@
+.expenses-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.expenses-filters {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.expenses-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.expense-stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.expense-stat-card .stat-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+}
+
+.expense-stat-card .stat-icon.total {
+    background: rgba(0, 102, 204, 0.1);
+    color: #0066cc;
+}
+
+.expense-stat-card .stat-icon.count {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.expense-stat-card .stat-label {
+    font-size: 14px;
+    color: var(--text-muted);
+}
+
+.expense-stat-card .stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.expenses-table-container {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.expenses-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.expenses-table th,
+.expenses-table td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.expenses-table th {
+    background: var(--bg-elevated);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.expenses-table tbody tr:hover {
+    background: var(--bg-elevated);
+}
+
+.expenses-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.expense-amount {
+    font-weight: 600;
+    color: #dc3545;
+}
+
+.expense-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.expense-category.materiel {
+    background: rgba(0, 102, 204, 0.1);
+    color: #0066cc;
+}
+
+.expense-category.fournitures {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.expense-category.transport {
+    background: rgba(255, 193, 7, 0.1);
+    color: #856404;
+}
+
+.expense-category.maintenance {
+    background: rgba(111, 66, 193, 0.1);
+    color: #6f42c1;
+}
+
+.expense-category.salaires {
+    background: rgba(23, 162, 184, 0.1);
+    color: #17a2b8;
+}
+
+.expense-category.loyer {
+    background: rgba(253, 126, 20, 0.1);
+    color: #fd7e14;
+}
+
+.expense-category.electricite {
+    background: rgba(255, 193, 7, 0.15);
+    color: #d39e00;
+}
+
+.expense-category.autre {
+    background: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+.expense-date {
+    color: var(--text-muted);
+    font-size: 14px;
+}
+
+.expense-reference {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-style: italic;
+}
+
+.expense-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.category-chart {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.category-chart h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+}
+
+.category-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.category-bar-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.category-bar-label {
+    min-width: 100px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.category-bar-container {
+    flex: 1;
+    height: 24px;
+    background: var(--bg-elevated);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.category-bar-fill {
+    height: 100%;
+    border-radius: 12px;
+    transition: width 0.3s ease;
+}
+
+.category-bar-value {
+    min-width: 100px;
+    text-align: right;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.empty-state svg {
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.empty-state p {
+    font-size: 14px;
+}
