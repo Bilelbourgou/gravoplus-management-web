@@ -71,3 +71,47 @@ export default defineConfig([
   },
 ])
 ```
+
+## Docker Setup
+
+### Prerequisites
+- Docker Desktop installed
+- Docker Compose installed
+
+### Quick Start
+
+1. **Build and start the frontend:**
+   ```bash
+   docker-compose up -d
+   ```
+
+2. **Access the application:**
+   - Frontend Web: http://localhost:3000
+
+### Docker Commands
+
+#### Start service
+```bash
+docker-compose up -d
+```
+
+#### Stop service
+```bash
+docker-compose down
+```
+
+#### View logs
+```bash
+docker-compose logs -f frontend
+```
+
+#### Rebuild container
+```bash
+docker-compose up -d --build
+```
+
+### Notes
+
+- The frontend is served via Nginx on port 3000 (mapped to container port 80)
+- API requests to `/api` and `/socket.io` are proxied to the backend
+- Make sure the backend is running separately for full functionality
