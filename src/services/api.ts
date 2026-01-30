@@ -2,7 +2,7 @@ import axios, { type AxiosError, type AxiosInstance } from 'axios';
 import { useAuthStore } from '../store/auth.store';
 import type { ApiResponse } from '../types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
