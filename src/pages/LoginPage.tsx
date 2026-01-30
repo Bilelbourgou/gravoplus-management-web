@@ -121,10 +121,6 @@ export function LoginPage() {
             </button>
           </form>
 
-          <div className="login-footer">
-            <p>Credentials de test:</p>
-            <code>admin / admin123</code>
-          </div>
         </div>
       </div>
 
