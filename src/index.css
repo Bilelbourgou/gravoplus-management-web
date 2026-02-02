@@ -653,10 +653,202 @@ p {
 .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
 .grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
 
-@media (max-width: 1024px) {
-  .lg\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+/* ============================================
+   Mobile Responsive Utilities
+   ============================================ */
+
+/* Visibility helpers */
+.hide-mobile {
+  display: block;
 }
 
-@media (max-width: 768px) {
-  .md\:grid-cols-1 { grid-template-columns: 1fr; }
+.show-mobile {
+  display: none;
 }
+
+/* ============================================
+   Tablet Breakpoint (max-width: 1024px)
+   ============================================ */
+
+@media (max-width: 1024px) {
+  .lg\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .grid-cols-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-cols-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ============================================
+   Mobile Breakpoint (max-width: 768px)
+   ============================================ */
+
+@media (max-width: 768px) {
+  /* Root adjustments for mobile */
+  :root {
+    --sidebar-width: 0px;
+  }
+
+  /* Visibility */
+  .hide-mobile {
+    display: none !important;
+  }
+
+  .show-mobile {
+    display: block !important;
+  }
+
+  /* Typography scaling */
+  h1 { font-size: var(--text-2xl); }
+  h2 { font-size: var(--text-xl); }
+  h3 { font-size: var(--text-lg); }
+
+  /* Grid responsive */
+  .md\:grid-cols-1 { grid-template-columns: 1fr; }
+  .grid-cols-2 { grid-template-columns: 1fr; }
+  .grid-cols-3 { grid-template-columns: 1fr; }
+  .grid-cols-4 { grid-template-columns: 1fr; }
+
+  /* Cards */
+  .card-body {
+    padding: var(--space-4);
+  }
+
+  .card-header {
+    padding: var(--space-4);
+  }
+
+  /* Stat cards */
+  .stat-card {
+    padding: var(--space-4);
+  }
+
+  .stat-value {
+    font-size: var(--text-2xl);
+  }
+
+  /* Modal full-width on mobile */
+  .modal {
+    width: 95%;
+    max-width: none;
+    margin: var(--space-4);
+    max-height: calc(100vh - var(--space-8));
+  }
+
+  .modal-xl {
+    max-width: none;
+  }
+
+  .modal-header {
+    padding: var(--space-4);
+  }
+
+  .modal-body {
+    padding: var(--space-4);
+  }
+
+  .modal-footer {
+    padding: var(--space-3) var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  .modal-footer .btn {
+    flex: 1;
+    min-width: 100px;
+  }
+
+  /* Tables - horizontal scroll wrapper */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .table {
+    min-width: 600px;
+  }
+
+  .table th,
+  .table td {
+    padding: var(--space-3);
+    font-size: var(--text-xs);
+  }
+
+  /* Buttons - larger touch targets */
+  .btn {
+    min-height: 44px;
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .btn-sm {
+    min-height: 36px;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .btn-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* Form elements - larger touch targets */
+  .form-input,
+  .form-select,
+  .form-textarea {
+    min-height: 44px;
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+
+  /* Form row stack on mobile */
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  /* Page content padding */
+  .page-content {
+    padding: var(--space-4);
+  }
+
+  /* Spacing utilities on mobile */
+  .p-6 { padding: var(--space-4); }
+  .mb-6 { margin-bottom: var(--space-4); }
+  .mt-6 { margin-top: var(--space-4); }
+  .gap-6 { gap: var(--space-4); }
+}
+
+/* ============================================
+   Small Mobile Breakpoint (max-width: 480px)
+   ============================================ */
+
+@media (max-width: 480px) {
+  /* Even smaller typography */
+  h1 { font-size: var(--text-xl); }
+  h2 { font-size: var(--text-lg); }
+
+  /* Tighter spacing */
+  .page-content {
+    padding: var(--space-3);
+  }
+
+  .card-body,
+  .card-header {
+    padding: var(--space-3);
+  }
+
+  .stat-card {
+    padding: var(--space-3);
+  }
+
+  .stat-value {
+    font-size: var(--text-xl);
+  }
+
+  .stat-label {
+    font-size: var(--text-xs);
+  }
+
+  /* Full-width buttons on very small screens */
+  .modal-footer {
+    flex-direction: column;
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+  }
+}
+

@@ -244,3 +244,56 @@
 .empty-state p {
     font-size: 14px;
 }
+
+/* ============================================
+   Mobile Responsive Styles
+   ============================================ */
+
+@media (max-width: 768px) {
+  .expenses-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .expenses-filters {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .expenses-filters .form-select,
+  .expenses-filters .form-input {
+    width: 100%;
+  }
+
+  .expenses-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .expenses-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .expenses-table {
+    min-width: 600px;
+  }
+
+  .expense-actions {
+    flex-direction: column;
+  }
+
+  .category-bar-item {
+    flex-wrap: wrap;
+  }
+
+  .category-bar-label {
+    min-width: 80px;
+    font-size: 12px;
+  }
+
+  .category-bar-value {
+    min-width: 80px;
+    font-size: 12px;
+  }
+}
+

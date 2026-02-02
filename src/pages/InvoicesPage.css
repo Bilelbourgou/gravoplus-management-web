@@ -112,3 +112,38 @@
   gap: var(--space-2);
   color: var(--text-muted);
 }
+
+/* ============================================
+   Mobile Responsive Styles
+   ============================================ */
+
+@media (max-width: 768px) {
+  .invoices-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .action-buttons .btn {
+    width: 100%;
+  }
+
+  .payment-status {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .payment-progress-mini {
+    width: 100%;
+  }
+
+  .devis-references {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+

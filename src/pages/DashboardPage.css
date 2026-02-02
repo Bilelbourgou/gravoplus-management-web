@@ -6,6 +6,19 @@
   animation: fadeIn var(--transition-normal);
 }
 
+@media (max-width: 768px) {
+  .dashboard-content {
+    padding: var(--space-4);
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-content {
+    padding: var(--space-3);
+  }
+}
+
 .dashboard-loading,
 .dashboard-error {
   display: flex;

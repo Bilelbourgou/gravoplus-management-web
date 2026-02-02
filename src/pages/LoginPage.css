@@ -138,3 +138,52 @@
     radial-gradient(ellipse at 20% 80%, rgba(46, 125, 85, 0.1) 0%, transparent 50%),
     radial-gradient(ellipse at 50% 50%, rgba(139, 195, 74, 0.05) 0%, transparent 100%);
 }
+
+/* ============================================
+   Mobile Responsive Styles
+   ============================================ */
+
+@media (max-width: 768px) {
+  .login-container {
+    padding: var(--space-4);
+  }
+
+  .login-card {
+    padding: var(--space-6);
+    max-width: none;
+  }
+
+  .logo-image-lg {
+    width: 64px;
+    height: 64px;
+  }
+
+  .login-header h1 {
+    font-size: var(--text-2xl);
+  }
+
+  .login-header {
+    margin-bottom: var(--space-6);
+  }
+}
+
+@media (max-width: 480px) {
+  .login-container {
+    padding: var(--space-3);
+  }
+
+  .login-card {
+    padding: var(--space-5);
+    border-radius: var(--radius-xl);
+  }
+
+  .login-header h1 {
+    font-size: var(--text-xl);
+  }
+
+  .login-footer code {
+    font-size: var(--text-xs);
+    padding: var(--space-1) var(--space-2);
+  }
+}
+
