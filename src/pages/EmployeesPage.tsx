@@ -448,15 +448,13 @@ export function EmployeesPage() {
                           >
                             <Edit2 size={18} />
                           </button>
-                          {employee.isActive && (
-                            <button
-                              className="btn btn-ghost btn-icon"
-                              onClick={() => setDeletingEmployee(employee)}
-                              title="Désactiver"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          )}
+                          <button
+                            className="btn btn-ghost btn-icon"
+                            onClick={() => setDeletingEmployee(employee)}
+                            title="Désactiver"
+                          >
+                            <Trash2 size={18} />
+                          </button>
                         </div>
                       </td>
                     </tr>
