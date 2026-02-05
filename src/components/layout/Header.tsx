@@ -43,7 +43,7 @@ export function Header({ title, subtitle }: HeaderProps) {
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
 
   const fetchNotifications = async () => {
     if (!isAdmin) return;
