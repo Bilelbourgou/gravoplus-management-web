@@ -100,7 +100,7 @@ export const clientsApi = {
 // ==================== Devis ====================
 
 export const devisApi = {
-    getAll: async (filters?: { clientId?: string; status?: string }): Promise<Devis[]> => {
+    getAll: async (filters?: { clientId?: string; status?: string; dateFrom?: string; dateTo?: string }): Promise<Devis[]> => {
         const res = await api.get<ApiResponse<Devis[]>>('/devis', { params: filters });
         return res.data.data!;
     },
@@ -156,8 +156,8 @@ export const devisApi = {
 // ==================== Invoices ====================
 
 export const invoicesApi = {
-    getAll: async (): Promise<Invoice[]> => {
-        const res = await api.get<ApiResponse<Invoice[]>>('/invoices');
+    getAll: async (filters?: { dateFrom?: string; dateTo?: string }): Promise<Invoice[]> => {
+        const res = await api.get<ApiResponse<Invoice[]>>('/invoices', { params: filters });
         return res.data.data!;
     },
 

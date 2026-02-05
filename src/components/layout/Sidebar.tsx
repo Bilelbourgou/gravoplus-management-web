@@ -26,6 +26,7 @@ const navItems = [
   { path: '/devis', icon: FileText, label: 'Devis' },
   { path: '/invoices', icon: Receipt, label: 'Factures' },
   { path: '/expenses', icon: Wallet, label: 'Dépenses', adminOnly: true },
+  { path: '/financial', icon: Receipt, label: 'Finances', adminOnly: true },
   { path: '/settings', icon: Settings, label: 'Paramètres' },
 ];
 
@@ -105,8 +106,8 @@ export function Sidebar() {
 
         <nav className="sidebar-nav">
           {navItems
-            .filter((item) => !('adminOnly' in item) || !item.adminOnly || user?.role === 'ADMIN')
-            .map((item) => (
+  .filter((item) => !('adminOnly' in item) || !item.adminOnly || user?.role === 'ADMIN' || user?.role === 'SUPERADMIN')
+  .map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
@@ -131,7 +132,7 @@ export function Sidebar() {
                 <div className="user-details">
                   <span className="user-name">{user.firstName} {user.lastName}</span>
                   <span className={`user-role badge badge-${user.role.toLowerCase()}`}>
-                    {user.role}
+                    {user.role === 'SUPERADMIN' ? 'Super Admin' : user.role === 'ADMIN' ? 'Admin' : 'Employé'}
                   </span>
                 </div>
               )}

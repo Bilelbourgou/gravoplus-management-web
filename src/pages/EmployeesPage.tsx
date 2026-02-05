@@ -402,7 +402,7 @@ export function EmployeesPage() {
                     <tr key={employee.id} className={!employee.isActive ? 'inactive-row' : ''}>
                       <td>
                         <div className="employee-cell">
-                          <div className={`employee-avatar ${employee.role === 'ADMIN' ? 'admin' : ''}`}>
+                          <div className={`employee-avatar ${employee.role === 'ADMIN' || employee.role === 'SUPERADMIN' ? 'admin' : ''}`}>
                             {employee.firstName[0]}{employee.lastName[0]}
                           </div>
                           <div>
@@ -415,7 +415,7 @@ export function EmployeesPage() {
                       <td className="text-muted">@{employee.username}</td>
                       <td>
                         <span className={`badge badge-${employee.role.toLowerCase()}`}>
-                          {employee.role === 'ADMIN' ? 'Admin' : 'Employé'}
+                          {employee.role === 'SUPERADMIN' ? 'Super Admin' : employee.role === 'ADMIN' ? 'Admin' : 'Employé'}
                         </span>
                       </td>
                       <td>

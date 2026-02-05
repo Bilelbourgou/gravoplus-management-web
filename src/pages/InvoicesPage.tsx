@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { PaymentModal } from '../components/PaymentModal';
+import { DateRangeFilter } from '../components/common/DateRangeFilter';
 import { invoicesApi, paymentsApi } from '../services';
 import './InvoicesPage.css';
 
@@ -43,10 +44,15 @@ export function InvoicesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithDevis | null>(null);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const fetchInvoices = async () => {
     try {
-      const invoicesList = await invoicesApi.getAll();
+      const invoicesList = await invoicesApi.getAll({ 
+        dateFrom: dateFrom || undefined, 
+        dateTo: dateTo || undefined 
+      });
       const invoicesData: InvoiceWithDevis[] = await Promise.all(
         invoicesList.map(async (invoice) => {
           try {
@@ -85,7 +91,12 @@ export function InvoicesPage() {
 
   useEffect(() => {
     fetchInvoices();
-  }, []);
+  }, [dateFrom, dateTo]);
+
+  const handleDateRangeChange = (start: string, end: string) => {
+    setDateFrom(start);
+    setDateTo(end);
+  };
 
   const filteredInvoices = useMemo(() => {
     if (!searchQuery.trim()) return invoices;
@@ -211,6 +222,11 @@ export function InvoicesPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          <DateRangeFilter
+            startDate={dateFrom}
+            endDate={dateTo}
+            onChange={handleDateRangeChange}
+          />
         </div>
 
         {error && (

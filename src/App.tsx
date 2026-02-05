@@ -11,7 +11,8 @@ import {
   DevisPage, 
   InvoicesPage, 
   SettingsPage,
-  ExpensesPage 
+  ExpensesPage,
+  FinancialPage
 } from './pages';
 import './App.css';
 
@@ -66,6 +67,7 @@ function App() {
               <Route path="/devis" element={<DevisPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
+              <Route path="/financial" element={<FinancialPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>

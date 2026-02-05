@@ -1,6 +1,6 @@
 // API Types matching backend responses
 
-export type UserRole = 'ADMIN' | 'EMPLOYEE';
+export type UserRole = 'SUPERADMIN' | 'ADMIN' | 'EMPLOYEE';
 export type MachineType = 'CNC' | 'LASER' | 'CHAMPS' | 'PANNEAUX';
 export type DevisStatus = 'DRAFT' | 'VALIDATED' | 'INVOICED' | 'CANCELLED';
 
@@ -273,7 +273,7 @@ export interface ClientBalanceData {
     pendingDevis: ClientBalancePendingDevis[];
 }
 
-export type ExpenseCategory = 
+export type ExpenseCategory =
     | 'Matériel'
     | 'Fournitures'
     | 'Transport'
@@ -312,7 +312,7 @@ export interface ExpenseStats {
     byCategory: Record<string, number>;
 }
 
-export type NotificationType = 
+export type NotificationType =
     | 'CLIENT_CREATED'
     | 'CLIENT_UPDATED'
     | 'CLIENT_DELETED'

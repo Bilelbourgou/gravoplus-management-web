@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { CreateInvoiceModal } from '../components/CreateInvoiceModal';
+import { DateRangeFilter } from '../components/common/DateRangeFilter';
 import { devisApi, clientsApi, servicesApi, materialsApi, invoicesApi } from '../services';
 import type { Devis, Client, DevisStatus, MachineType, FixedService, Material, AddDevisLineFormData } from '../types';
 import './DevisPage.css';
@@ -575,11 +576,17 @@ export function DevisPage() {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [showInvoiceModal, setShowInvoiceModal] = useState(false);
   const [preSelectedClientId, setPreSelectedClientId] = useState<string | undefined>(undefined);
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const fetchData = async () => {
     try {
       const [devisData, clientsData, materialsData, servicesData] = await Promise.all([
-        devisApi.getAll(),
+        devisApi.getAll({ 
+          status: statusFilter === 'ALL' ? undefined : statusFilter, 
+          dateFrom: dateFrom || undefined,
+          dateTo: dateTo || undefined
+        }),
         clientsApi.getAll(),
         materialsApi.getAll(),
         servicesApi.getAll(),
@@ -618,7 +625,12 @@ export function DevisPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [statusFilter, dateFrom, dateTo]);
+
+  const handleDateRangeChange = (start: string, end: string) => {
+    setDateFrom(start);
+    setDateTo(end);
+  };
 
   useEffect(() => {
     const clientId = searchParams.get('clientId');
@@ -631,10 +643,6 @@ export function DevisPage() {
   const filteredDevis = useMemo(() => {
     let result = devisList;
 
-    if (statusFilter !== 'ALL') {
-      result = result.filter((d) => d.status === statusFilter);
-    }
-
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -645,7 +653,7 @@ export function DevisPage() {
     }
 
     return result;
-  }, [devisList, statusFilter, searchQuery]);
+  }, [devisList, searchQuery]);
 
   const handleCreate = async (clientId: string, notes?: string) => {
     const newDevis = await devisApi.create({ clientId, notes });
@@ -727,6 +735,11 @@ export function DevisPage() {
             />
           </div>
           <div className="actions-right">
+            <DateRangeFilter
+              startDate={dateFrom}
+              endDate={dateTo}
+              onChange={handleDateRangeChange}
+            />
             <div className="filter-dropdown">
               <button
                 className="btn btn-secondary"

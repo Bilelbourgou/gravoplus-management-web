@@ -495,6 +495,12 @@ p {
   color: var(--color-neutral-300);
 }
 
+.badge-superadmin {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(147, 51, 234, 0.3));
+  color: #d8b4fe;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+}
+
 /* ============================================
    Modal
    ============================================ */
