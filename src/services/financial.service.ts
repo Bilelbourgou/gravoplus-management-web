@@ -2,7 +2,7 @@
 import api from './api';
 
 export interface FinancialStats {
-    periodStart: string;
+    periodStart: string | null;
     periodEnd: string;
     totalIncome: number;
     totalExpense: number;
@@ -18,6 +18,10 @@ export interface FinancialStats {
         invoice: {
             reference: string;
             client: { name: string };
+        };
+        createdBy?: {
+            firstName: string;
+            lastName: string;
         };
     }>;
     expenses: Array<{

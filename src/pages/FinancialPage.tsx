@@ -125,7 +125,7 @@ const FinancialPage: React.FC = () => {
               </span>
             </h3>
             <p className="subtitle">
-              Ouverture: {stats?.periodStart ? formatDate(stats.periodStart) : 'Début'}
+              Ouverture: {stats?.periodStart ? formatDate(stats.periodStart) : 'Première Session'}
             </p>
           </div>
           <button 
@@ -171,6 +171,7 @@ const FinancialPage: React.FC = () => {
                       <th>Client</th>
                       <th>Facture</th>
                       <th>Ref. Paiement</th>
+                      <th>Effectué par</th>
                       <th>Mode</th>
                       <th style={{ textAlign: 'right' }}>Montant (TND)</th>
                     </tr>
@@ -183,6 +184,7 @@ const FinancialPage: React.FC = () => {
                           <td>{p.invoice?.client?.name || 'Client Inconnu'}</td>
                           <td>{p.invoice?.reference || '-'}</td>
                           <td>{p.reference || '-'}</td>
+                          <td>{p.createdBy?.firstName || '-'} {p.createdBy?.lastName || ''}</td>
                           <td>
                             <span className="badge badge-info">{p.paymentMethod || 'Espèces'}</span>
                           </td>
@@ -193,7 +195,7 @@ const FinancialPage: React.FC = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Aucune recette pour cette session</td>
+                        <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>Aucune recette pour cette session</td>
                       </tr>
                     )}
                   </tbody>
