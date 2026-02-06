@@ -1,7 +1,7 @@
 // API Types matching backend responses
 
 export type UserRole = 'SUPERADMIN' | 'ADMIN' | 'EMPLOYEE';
-export type MachineType = 'CNC' | 'LASER' | 'CHAMPS' | 'PANNEAUX';
+export type MachineType = 'CNC' | 'LASER' | 'CHAMPS' | 'PANNEAUX' | 'SERVICE_MAINTENANCE';
 export type DevisStatus = 'DRAFT' | 'VALIDATED' | 'INVOICED' | 'CANCELLED';
 
 export interface User {
@@ -224,6 +224,7 @@ export interface AddDevisLineFormData {
     minutes?: number;
     meters?: number;
     quantity?: number;
+    unitPrice?: number;
     materialId?: string;
 }
 

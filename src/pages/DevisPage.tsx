@@ -35,6 +35,7 @@ const MACHINE_LABELS: Record<MachineType, string> = {
   LASER: 'Laser',
   CHAMPS: 'Champs',
   PANNEAUX: 'Panneaux',
+  SERVICE_MAINTENANCE: 'Service Maintenance',
 };
 
 interface CreateDevisModalProps {
@@ -431,6 +432,22 @@ function DevisDetailModal({
                           }
                           placeholder="0"
                           min="1"
+                        />
+                      </div>
+                    )}
+                    {lineForm.machineType === 'SERVICE_MAINTENANCE' && (
+                      <div className="form-group">
+                        <label className="form-label">Prix (TND)</label>
+                        <input
+                          type="number"
+                          className="form-input"
+                          value={lineForm.unitPrice || ''}
+                          onChange={(e) =>
+                            setLineForm({ ...lineForm, unitPrice: parseFloat(e.target.value) || undefined })
+                          }
+                          placeholder="0.00"
+                          min="0"
+                          step="0.01"
                         />
                       </div>
                     )}

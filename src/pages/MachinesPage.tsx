@@ -7,6 +7,7 @@ import {
   Layers,
   LayoutGrid,
   Save,
+  Wrench,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { machinesApi } from '../services';
@@ -37,6 +38,12 @@ const MACHINE_INFO: Record<MachineType, { icon: typeof Cpu; label: string; unit:
     label: 'Panneaux',
     unit: 'TND/unité',
     description: 'Panneaux - tarification à l\'unité',
+  },
+  SERVICE_MAINTENANCE: {
+    icon: Wrench,
+    label: 'Service Maintenance',
+    unit: 'TND/service',
+    description: 'Maintenance et services divers - prix forfaitaire',
   },
 };
 
@@ -247,6 +254,13 @@ export function MachinesPage() {
                 <div className="formula-content">
                   <h4>Panneaux</h4>
                   <code>Total = quantité × prix/unité</code>
+                </div>
+              </div>
+              <div className="formula-item">
+                <div className="formula-icon maintenance"><Wrench size={20} /></div>
+                <div className="formula-content">
+                  <h4>Service Maintenance</h4>
+                  <code>Total = quantité × prix/service</code>
                 </div>
               </div>
             </div>
