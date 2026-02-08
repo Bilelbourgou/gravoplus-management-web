@@ -56,9 +56,14 @@
 }
 
 /* Financial Stats */
-.financial-stats {
-  grid-template-columns: repeat(3, 1fr);
-}
+ .daily-stats,
+ .financial-stats {
+   grid-template-columns: repeat(3, 1fr);
+ }
+
+ .daily-stats {
+   margin-bottom: var(--space-6);
+ }
 
 .financial-stats .stat-card {
   position: relative;

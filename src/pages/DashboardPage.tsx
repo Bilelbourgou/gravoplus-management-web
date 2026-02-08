@@ -9,6 +9,7 @@ import {
   Wallet,
   ArrowUpRight,
   Clock,
+  CreditCard,
 } from 'lucide-react';
 import {
   BarChart,
@@ -95,6 +96,33 @@ export function DashboardPage() {
       <Header title="Tableau de bord" subtitle="Vue d'ensemble de votre activité" />
       
       <div className="dashboard-content">
+        {/* Daily Stats */}
+        <div className="stats-grid daily-stats mb-6">
+          <div className="stat-card">
+            <div className="stat-icon blue">
+              <FileText size={24} />
+            </div>
+            <div className="stat-value">{stats.todaysDevisTotal.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-label">Devis aujourd'hui</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon purple">
+              <Receipt size={24} />
+            </div>
+            <div className="stat-value">{stats.todaysInvoicesTotal.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-label">Factures aujourd'hui</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-icon green">
+              <CreditCard size={24} />
+            </div>
+            <div className="stat-value">{stats.todaysPaymentsTotal.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-label">Paiements aujourd'hui</div>
+          </div>
+        </div>
+
         {/* Financial Stats Cards */}
         <div className="stats-grid financial-stats">
           <div className="stat-card income">

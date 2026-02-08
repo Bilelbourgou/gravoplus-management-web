@@ -153,6 +153,9 @@ export interface DashboardStats {
     totalRevenue: number;
     totalExpenses: number;
     netProfit: number;
+    todaysDevisTotal: number;
+    todaysInvoicesTotal: number;
+    todaysPaymentsTotal: number;
     devisByStatus: {
         draft: number;
         validated: number;
