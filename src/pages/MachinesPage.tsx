@@ -8,6 +8,7 @@ import {
   LayoutGrid,
   Save,
   Wrench,
+  Ruler,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { machinesApi } from '../services';
@@ -44,6 +45,12 @@ const MACHINE_INFO: Record<MachineType, { icon: typeof Cpu; label: string; unit:
     label: 'Service Maintenance',
     unit: 'TND/service',
     description: 'Maintenance et services divers - prix forfaitaire',
+  },
+  VENTE_MATERIAU: {
+    icon: Ruler,
+    label: 'Vente Matériau',
+    unit: 'TND/m²',
+    description: 'Vente de matériaux au m²',
   },
 };
 
@@ -261,6 +268,13 @@ export function MachinesPage() {
                 <div className="formula-content">
                   <h4>Service Maintenance</h4>
                   <code>Total = quantité × prix/service</code>
+                </div>
+              </div>
+              <div className="formula-item">
+                <div className="formula-icon vente_materiau"><Ruler size={20} /></div>
+                <div className="formula-content">
+                  <h4>Vente Matériau</h4>
+                  <code>Total = (Largeur × Hauteur) × prix matériau/m²</code>
                 </div>
               </div>
             </div>

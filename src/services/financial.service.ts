@@ -33,6 +33,12 @@ export interface FinancialStats {
         reference: string;
         createdBy: { firstName: string; lastName: string };
     }>;
+    revenueByEmployee: Array<{
+        employeeId: string;
+        employeeName: string;
+        totalAmount: number;
+        paymentCount: number;
+    }>;
 }
 
 export interface FinancialClosure {

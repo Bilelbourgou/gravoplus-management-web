@@ -36,6 +36,7 @@ const MACHINE_LABELS: Record<MachineType, string> = {
   CHAMPS: 'Champs',
   PANNEAUX: 'Panneaux',
   SERVICE_MAINTENANCE: 'Service Maintenance',
+  VENTE_MATERIAU: 'Vente Matériau',
 };
 
 interface CreateDevisModalProps {
@@ -181,6 +182,9 @@ function DevisDetailModal({
     meters: undefined,
     quantity: undefined,
     materialId: undefined,
+    width: undefined,
+    height: undefined,
+    dimensionUnit: 'm',
   });
 
   const handleAddLine = async () => {
@@ -195,6 +199,9 @@ function DevisDetailModal({
         meters: undefined,
         quantity: undefined,
         materialId: undefined,
+        width: undefined,
+        height: undefined,
+        dimensionUnit: 'm',
       });
       onRefresh();
     } catch (err) {
@@ -239,6 +246,10 @@ function DevisDetailModal({
   };
 
   const handleCancel = async () => {
+    if (!confirm('Êtes-vous sûr de vouloir annuler ce devis ?')) {
+      return;
+    }
+
     setLoading(true);
     try {
       await onCancel(devis.id);
@@ -324,6 +335,11 @@ function DevisDetailModal({
                         {line.minutes && <span>{Number(line.minutes)} min</span>}
                         {line.meters && <span>{Number(line.meters)} m</span>}
                         {line.quantity && <span>{line.quantity} unités</span>}
+                        {line.width && line.height && (
+                            <span>
+                                {Number(line.width)} x {Number(line.height)} {line.dimensionUnit}
+                            </span>
+                        )}
                       </div>
                       <div className="devis-line-total">
                         {Number(line.lineTotal).toFixed(2)} TND
@@ -389,20 +405,80 @@ function DevisDetailModal({
 
                   <div className="form-row">
                     {(lineForm.machineType === 'CNC' || lineForm.machineType === 'LASER') && (
-                      <div className="form-group">
-                        <label className="form-label">Minutes</label>
-                        <input
-                          type="number"
-                          className="form-input"
-                          value={lineForm.minutes || ''}
+                      <>
+                        <div className="form-group">
+                          <label className="form-label">Minutes</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={lineForm.minutes || ''}
+                            onChange={(e) =>
+                              setLineForm({ ...lineForm, minutes: parseFloat(e.target.value) || undefined })
+                            }
+                            placeholder="0"
+                            min="0"
+                            step="0.1"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Largeur</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={lineForm.width || ''}
+                            onChange={(e) =>
+                              setLineForm({ ...lineForm, width: parseFloat(e.target.value) || undefined })
+                            }
+                            placeholder="0"
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Hauteur</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={lineForm.height || ''}
+                            onChange={(e) =>
+                              setLineForm({ ...lineForm, height: parseFloat(e.target.value) || undefined })
+                            }
+                            placeholder="0"
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Unité</label>
+                          <select
+                            className="form-select"
+                            value={lineForm.dimensionUnit || 'm'}
+                            onChange={(e) =>
+                              setLineForm({ ...lineForm, dimensionUnit: e.target.value })
+                            }
+                          >
+                            <option value="m">Mètres (m)</option>
+                            <option value="cm">Centimètres (cm)</option>
+                          </select>
+                        </div>
+                         <div className="form-group">
+                        <label className="form-label">Matériau</label>
+                        <select
+                          className="form-select"
+                          value={lineForm.materialId || ''}
                           onChange={(e) =>
-                            setLineForm({ ...lineForm, minutes: parseFloat(e.target.value) || undefined })
+                            setLineForm({ ...lineForm, materialId: e.target.value || undefined })
                           }
-                          placeholder="0"
-                          min="0"
-                          step="0.1"
-                        />
+                        >
+                          <option value="">Aucun</option>
+                          {materials.filter((m) => m.isActive).map((m) => (
+                            <option key={m.id} value={m.id}>
+                              {m.name} - {Number(m.pricePerUnit).toFixed(2)} TND/{m.unit}
+                            </option>
+                          ))}
+                        </select>
                       </div>
+                      </>
                     )}
                     {lineForm.machineType === 'CHAMPS' && (
                       <div className="form-group">
@@ -451,9 +527,10 @@ function DevisDetailModal({
                         />
                       </div>
                     )}
-                    {lineForm.machineType === 'LASER' && (
-                      <div className="form-group">
-                        <label className="form-label">Matériau</label>
+                    {lineForm.machineType === 'VENTE_MATERIAU' && (
+                       <>
+                       <div className="form-group">
+                        <label className="form-label">Matériau *</label>
                         <select
                           className="form-select"
                           value={lineForm.materialId || ''}
@@ -461,7 +538,7 @@ function DevisDetailModal({
                             setLineForm({ ...lineForm, materialId: e.target.value || undefined })
                           }
                         >
-                          <option value="">Aucun</option>
+                          <option value="">Sélectionner...</option>
                           {materials.filter((m) => m.isActive).map((m) => (
                             <option key={m.id} value={m.id}>
                               {m.name} - {Number(m.pricePerUnit).toFixed(2)} TND/{m.unit}
@@ -469,6 +546,50 @@ function DevisDetailModal({
                           ))}
                         </select>
                       </div>
+                       <div className="form-row">
+                        <div className="form-group">
+                          <label className="form-label">Largeur</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={lineForm.width || ''}
+                            onChange={(e) =>
+                              setLineForm({ ...lineForm, width: parseFloat(e.target.value) || undefined })
+                            }
+                            placeholder="0"
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Hauteur</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={lineForm.height || ''}
+                            onChange={(e) =>
+                              setLineForm({ ...lineForm, height: parseFloat(e.target.value) || undefined })
+                            }
+                            placeholder="0"
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
+                         <div className="form-group">
+                          <label className="form-label">Unité</label>
+                          <select
+                            className="form-select"
+                            value={lineForm.dimensionUnit || 'm'}
+                            onChange={(e) =>
+                              setLineForm({ ...lineForm, dimensionUnit: e.target.value })
+                            }
+                          >
+                            <option value="m">Mètres (m)</option>
+                            <option value="cm">Centimètres (cm)</option>
+                          </select>
+                        </div>
+                       </div>
+                       </>
                     )}
                   </div>
 

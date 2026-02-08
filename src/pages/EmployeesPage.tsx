@@ -20,9 +20,10 @@ const MACHINE_LABELS: Record<MachineType, string> = {
   CHAMPS: 'Champs',
   PANNEAUX: 'Panneaux',
   SERVICE_MAINTENANCE: 'Service Maintenance',
+  VENTE_MATERIAU: 'Vente Matériau',
 };
 
-const ALL_MACHINES: MachineType[] = ['CNC', 'LASER', 'CHAMPS', 'PANNEAUX', 'SERVICE_MAINTENANCE'];
+const ALL_MACHINES: MachineType[] = ['CNC', 'LASER', 'CHAMPS', 'PANNEAUX', 'SERVICE_MAINTENANCE', 'VENTE_MATERIAU'];
 
 interface EmployeeModalProps {
   employee: User | null;

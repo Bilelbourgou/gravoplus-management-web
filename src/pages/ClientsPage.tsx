@@ -37,6 +37,7 @@ const MACHINE_LABELS: Record<MachineType, string> = {
   CHAMPS: 'Champs',
   PANNEAUX: 'Panneaux',
   SERVICE_MAINTENANCE: 'Service Maintenance',
+  VENTE_MATERIAU: 'Vente Matériau',
 };
 
 interface ClientModalProps {
