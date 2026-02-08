@@ -6,7 +6,8 @@ import {
   Clock,
   AlertCircle,
   FileText,
-  Lock
+  Lock,
+  Users
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { financialService, type FinancialStats, type FinancialClosure } from '../services/financial.service';
@@ -148,6 +149,12 @@ const FinancialPage: React.FC = () => {
                     <TrendingUp size={16} style={{marginRight: 8}}/> Recettes / Paiements
                 </button>
                 <button 
+                    className={`tab-btn ${activeTab === 3 ? 'active' : ''}`} 
+                    onClick={() => setActiveTab(3)}
+                >
+                    <Users size={16} style={{marginRight: 8}}/> Par Employé
+                </button>
+                <button 
                     className={`tab-btn ${activeTab === 1 ? 'active' : ''}`} 
                     onClick={() => setActiveTab(1)}
                 >
@@ -203,6 +210,38 @@ const FinancialPage: React.FC = () => {
               </div>
           )}
           
+          {/* Par Employé Tab */}
+          {activeTab === 3 && (
+              <div className="tab-content table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Employé</th>
+                      <th style={{ textAlign: 'center' }}>Nombre de Paiements</th>
+                      <th style={{ textAlign: 'right' }}>Montant Total (TND)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats?.revenueByEmployee && stats.revenueByEmployee.length > 0 ? (
+                      stats.revenueByEmployee.map((item) => (
+                        <tr key={item.employeeId}>
+                          <td>{item.employeeName}</td>
+                          <td style={{ textAlign: 'center' }}>{item.paymentCount}</td>
+                          <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#22c55e' }}>
+                            {Number(item.totalAmount).toFixed(3)}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={3} style={{ textAlign: 'center', padding: '2rem' }}>Aucune recette par employé</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+          )}
+
           {/* Dépenses Tab */}
           {activeTab === 1 && (
               <div className="tab-content table-container">
