@@ -540,10 +540,11 @@ function DevisDetailModal({
                           className="form-input"
                           value={lineForm.quantity || ''}
                           onChange={(e) =>
-                            setLineForm({ ...lineForm, quantity: parseInt(e.target.value) || undefined })
+                            setLineForm({ ...lineForm, quantity: parseFloat(e.target.value) || undefined })
                           }
                           placeholder="0"
-                          min="1"
+                          min="0.01"
+                          step="0.01"
                         />
                       </div>
                     )}
