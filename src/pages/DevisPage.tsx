@@ -183,6 +183,7 @@ function DevisDetailModal({
   const [loading, setLoading] = useState(false);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
   const [newFieldName, setNewFieldName] = useState('');
+  const [maintenanceType, setMaintenanceType] = useState<'material' | 'service' | 'manual'>('manual');
 
   const [lineForm, setLineForm] = useState<AddDevisLineFormData>({
     machineType: 'CNC',
@@ -549,20 +550,112 @@ function DevisDetailModal({
                       </div>
                     )}
                     {lineForm.machineType === 'SERVICE_MAINTENANCE' && (
-                      <div className="form-group">
-                        <label className="form-label">Prix (TND)</label>
-                        <input
-                          type="number"
-                          className="form-input"
-                          value={lineForm.unitPrice || ''}
-                          onChange={(e) =>
-                            setLineForm({ ...lineForm, unitPrice: parseFloat(e.target.value) || undefined })
-                          }
-                          placeholder="0.00"
-                          min="0"
-                          step="0.01"
-                        />
-                      </div>
+                      <>
+                        <div className="form-group">
+                          <label className="form-label">Type de calcul</label>
+                          <select
+                            className="form-select"
+                            value={maintenanceType}
+                            onChange={(e) => {
+                              setMaintenanceType(e.target.value as 'material' | 'service' | 'manual');
+                              setLineForm({ ...lineForm, materialId: undefined, serviceId: undefined, unitPrice: undefined, quantity: undefined, width: undefined, height: undefined });
+                            }}
+                          >
+                            <option value="manual">Prix manuel</option>
+                            <option value="material">Matériau utilisé</option>
+                            <option value="service">Service fixe</option>
+                          </select>
+                        </div>
+
+                        {maintenanceType === 'manual' && (
+                          <div className="form-group">
+                            <label className="form-label">Prix (TND)</label>
+                            <input
+                              type="number"
+                              className="form-input"
+                              value={lineForm.unitPrice || ''}
+                              onChange={(e) =>
+                                setLineForm({ ...lineForm, unitPrice: parseFloat(e.target.value) || undefined })
+                              }
+                              placeholder="0.00"
+                              min="0"
+                              step="0.01"
+                            />
+                          </div>
+                        )}
+
+                        {maintenanceType === 'material' && (
+                          <>
+                            <div className="form-group">
+                              <label className="form-label">Matériau *</label>
+                              <select
+                                className="form-select"
+                                value={lineForm.materialId || ''}
+                                onChange={(e) =>
+                                  setLineForm({ ...lineForm, materialId: e.target.value || undefined })
+                                }
+                              >
+                                <option value="">Sélectionner...</option>
+                                {materials.filter((m) => m.isActive).map((m) => (
+                                  <option key={m.id} value={m.id}>
+                                    {m.name} - {Number(m.pricePerUnit).toFixed(2)} TND/{m.unit}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="form-group">
+                              <label className="form-label">Quantité</label>
+                              <input
+                                type="number"
+                                className="form-input"
+                                value={lineForm.quantity || ''}
+                                onChange={(e) =>
+                                  setLineForm({ ...lineForm, quantity: parseFloat(e.target.value) || undefined })
+                                }
+                                placeholder="1"
+                                min="0.01"
+                                step="0.01"
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        {maintenanceType === 'service' && (
+                          <>
+                            <div className="form-group">
+                              <label className="form-label">Service *</label>
+                              <select
+                                className="form-select"
+                                value={lineForm.serviceId || ''}
+                                onChange={(e) =>
+                                  setLineForm({ ...lineForm, serviceId: e.target.value || undefined })
+                                }
+                              >
+                                <option value="">Sélectionner...</option>
+                                {services.filter((s) => s.isActive).map((s) => (
+                                  <option key={s.id} value={s.id}>
+                                    {s.name} - {Number(s.price).toFixed(2)} TND
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className="form-group">
+                              <label className="form-label">Quantité</label>
+                              <input
+                                type="number"
+                                className="form-input"
+                                value={lineForm.quantity || ''}
+                                onChange={(e) =>
+                                  setLineForm({ ...lineForm, quantity: parseFloat(e.target.value) || undefined })
+                                }
+                                placeholder="1"
+                                min="1"
+                                step="1"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </>
                     )}
                     {lineForm.machineType === 'VENTE_MATERIAU' && (
                        <>

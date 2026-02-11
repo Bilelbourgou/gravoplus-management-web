@@ -239,6 +239,7 @@ export interface AddDevisLineFormData {
     quantity?: number;
     unitPrice?: number;
     materialId?: string;
+    serviceId?: string;
     width?: number;
     height?: number;
     dimensionUnit?: string;
