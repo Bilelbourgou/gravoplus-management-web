@@ -59,7 +59,7 @@ export const usersApi = {
         return res.data.data!;
     },
 
-    deactivate: async (id: string): Promise<void> => {
+    delete: async (id: string): Promise<void> => {
         await api.delete(`/users/${id}`);
     },
 };
@@ -150,6 +150,11 @@ export const devisApi = {
 
     delete: async (id: string): Promise<void> => {
         await api.delete(`/devis/${id}`);
+    },
+
+    createCustom: async (data: { clientId: string; items: { description: string; quantity: number; unitPrice: number }[]; notes?: string }): Promise<Devis> => {
+        const res = await api.post<ApiResponse<Devis>>('/devis/custom', data);
+        return res.data.data!;
     },
 };
 

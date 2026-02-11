@@ -37,6 +37,7 @@ const MACHINE_LABELS: Record<MachineType, string> = {
   PANNEAUX: 'Panneaux',
   SERVICE_MAINTENANCE: 'Service Maintenance',
   VENTE_MATERIAU: 'Vente Matériau',
+  CUSTOM: 'Personnalisé',
 };
 
 interface CreateDevisModalProps {
@@ -158,6 +159,12 @@ interface DevisDetailModalProps {
   onRefresh: () => void;
 }
 
+interface CustomField {
+  id: string;
+  name: string;
+  value: string;
+}
+
 function DevisDetailModal({
   devis,
   materials,
@@ -174,6 +181,8 @@ function DevisDetailModal({
   const [activeTab, setActiveTab] = useState<'lines' | 'services'>('lines');
   const [showAddLine, setShowAddLine] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [customFields, setCustomFields] = useState<CustomField[]>([]);
+  const [newFieldName, setNewFieldName] = useState('');
 
   const [lineForm, setLineForm] = useState<AddDevisLineFormData>({
     machineType: 'CNC',
@@ -187,10 +196,36 @@ function DevisDetailModal({
     dimensionUnit: 'm',
   });
 
+  const addCustomField = () => {
+    if (!newFieldName.trim()) return;
+    setCustomFields([...customFields, { id: crypto.randomUUID(), name: newFieldName.trim(), value: '' }]);
+    setNewFieldName('');
+  };
+
+  const removeCustomField = (id: string) => {
+    setCustomFields(customFields.filter(f => f.id !== id));
+  };
+
+  const updateCustomFieldValue = (id: string, value: string) => {
+    setCustomFields(customFields.map(f => f.id === id ? { ...f, value } : f));
+  };
+
   const handleAddLine = async () => {
     setLoading(true);
     try {
-      await onAddLine(devis.id, lineForm);
+      // Build description with custom fields for CUSTOM machine type
+      let finalDescription = lineForm.description || '';
+      if (lineForm.machineType === 'CUSTOM' && customFields.length > 0) {
+        const customFieldsText = customFields
+          .filter(f => f.value.trim())
+          .map(f => `${f.name}: ${f.value}`)
+          .join(' | ');
+        if (customFieldsText) {
+          finalDescription += finalDescription ? ` (${customFieldsText})` : customFieldsText;
+        }
+      }
+
+      await onAddLine(devis.id, { ...lineForm, description: finalDescription });
       setShowAddLine(false);
       setLineForm({
         machineType: 'CNC',
@@ -203,6 +238,7 @@ function DevisDetailModal({
         height: undefined,
         dimensionUnit: 'm',
       });
+      setCustomFields([]);
       onRefresh();
     } catch (err) {
       console.error(err);
@@ -591,7 +627,83 @@ function DevisDetailModal({
                        </div>
                        </>
                     )}
+                    {lineForm.machineType === 'CUSTOM' && (
+                      <>
+                        <div className="form-group">
+                          <label className="form-label">Quantité *</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={lineForm.quantity || ''}
+                            onChange={(e) =>
+                              setLineForm({ ...lineForm, quantity: parseInt(e.target.value) || undefined })
+                            }
+                            placeholder="1"
+                            min="1"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Prix Unitaire (TND) *</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={lineForm.unitPrice || ''}
+                            onChange={(e) =>
+                              setLineForm({ ...lineForm, unitPrice: parseFloat(e.target.value) || undefined })
+                            }
+                            placeholder="0.00"
+                            min="0"
+                            step="0.01"
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
+
+                  {/* Custom Fields for CUSTOM machine type */}
+                  {lineForm.machineType === 'CUSTOM' && (
+                    <div className="form-group" style={{ marginTop: '1rem' }}>
+                      <label className="form-label">Champs personnalisés</label>
+                      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <input
+                          type="text"
+                          className="form-input"
+                          placeholder="Nom du champ (ex: Dimensions, Couleur...)"
+                          value={newFieldName}
+                          onChange={(e) => setNewFieldName(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCustomField())}
+                          style={{ flex: 1 }}
+                        />
+                        <button type="button" className="btn btn-secondary" onClick={addCustomField} disabled={!newFieldName.trim()}>
+                          <Plus size={16} /> Ajouter
+                        </button>
+                      </div>
+                      {customFields.length > 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {customFields.map(field => (
+                            <div key={field.id} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                              <span style={{ minWidth: '120px', fontWeight: 500 }}>{field.name}:</span>
+                              <input
+                                type="text"
+                                className="form-input"
+                                placeholder={`Valeur pour ${field.name}`}
+                                value={field.value}
+                                onChange={(e) => updateCustomFieldValue(field.id, e.target.value)}
+                                style={{ flex: 1 }}
+                              />
+                              <button 
+                                type="button" 
+                                className="btn btn-ghost btn-icon" 
+                                onClick={() => removeCustomField(field.id)}
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   <div className="flex gap-2 mt-4">
                     <button

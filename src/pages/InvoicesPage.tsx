@@ -5,13 +5,11 @@ import {
   Download,
   Clock,
   FileText,
-  DollarSign,
   Trash2,
 } from 'lucide-react';
 import { Header } from '../components/layout';
-import { PaymentModal } from '../components/PaymentModal';
 import { DateRangeFilter } from '../components/common/DateRangeFilter';
-import { invoicesApi, paymentsApi } from '../services';
+import { invoicesApi } from '../services';
 import './InvoicesPage.css';
 
 interface InvoiceWithDevis {
@@ -29,12 +27,6 @@ interface InvoiceWithDevis {
     reference: string;
     totalAmount: number;
   }[];
-  paymentStats?: {
-    totalPaid: number;
-    remaining: number;
-    percentPaid: number;
-    isPaid: boolean;
-  };
 }
 
 export function InvoicesPage() {
@@ -43,7 +35,6 @@ export function InvoicesPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithDevis | null>(null);
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
 
@@ -53,33 +44,15 @@ export function InvoicesPage() {
         dateFrom: dateFrom || undefined, 
         dateTo: dateTo || undefined 
       });
-      const invoicesData: InvoiceWithDevis[] = await Promise.all(
-        invoicesList.map(async (invoice) => {
-          try {
-            const stats = await paymentsApi.getStats(invoice.id);
-            return {
-              id: invoice.id,
-              reference: invoice.reference,
-              totalAmount: invoice.totalAmount,
-              pdfUrl: invoice.pdfUrl,
-              createdAt: invoice.createdAt,
-              client: invoice.client!,
-              devis: invoice.devis || [],
-              paymentStats: stats,
-            };
-          } catch {
-            return {
-              id: invoice.id,
-              reference: invoice.reference,
-              totalAmount: invoice.totalAmount,
-              pdfUrl: invoice.pdfUrl,
-              createdAt: invoice.createdAt,
-              client: invoice.client!,
-              devis: invoice.devis || [],
-            };
-          }
-        })
-      );
+      const invoicesData: InvoiceWithDevis[] = invoicesList.map((invoice) => ({
+        id: invoice.id,
+        reference: invoice.reference,
+        totalAmount: invoice.totalAmount,
+        pdfUrl: invoice.pdfUrl,
+        createdAt: invoice.createdAt,
+        client: invoice.client!,
+        devis: invoice.devis || [],
+      }));
       setInvoices(invoicesData);
       setError(null);
     } catch (err) {
@@ -137,7 +110,6 @@ export function InvoicesPage() {
     try {
       await invoicesApi.delete(invoiceId);
       await fetchInvoices();
-      setSelectedInvoice(null);
     } catch (err: any) {
       alert(err.response?.data?.error || 'Erreur lors de la suppression de la facture');
     }
@@ -145,14 +117,6 @@ export function InvoicesPage() {
 
   const totalRevenue = useMemo(() => {
     return invoices.reduce((sum, inv) => sum + Number(inv.totalAmount), 0);
-  }, [invoices]);
-
-  const totalPaid = useMemo(() => {
-    return invoices.reduce((sum, inv) => sum + (inv.paymentStats?.totalPaid || 0), 0);
-  }, [invoices]);
-
-  const totalRemaining = useMemo(() => {
-    return invoices.reduce((sum, inv) => sum + (inv.paymentStats ? inv.paymentStats.remaining : Number(inv.totalAmount)), 0);
   }, [invoices]);
 
   if (loading) {
@@ -186,27 +150,9 @@ export function InvoicesPage() {
               <FileText size={24} />
             </div>
             <div className="stat-value">
-              {totalRevenue.toFixed(2)} <span className="currency">TND</span>
+              {totalRevenue.toFixed(3)} <span className="currency">TND</span>
             </div>
             <div className="stat-label">Chiffre d'affaires</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon success">
-              <DollarSign size={24} />
-            </div>
-            <div className="stat-value">
-              {totalPaid.toFixed(2)} <span className="currency">TND</span>
-            </div>
-            <div className="stat-label">Total payé</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon warning">
-              <DollarSign size={24} />
-            </div>
-            <div className="stat-value">
-              {totalRemaining.toFixed(2)} <span className="currency">TND</span>
-            </div>
-            <div className="stat-label">Reste à payer</div>
           </div>
         </div>
 
@@ -247,8 +193,8 @@ export function InvoicesPage() {
                   <tr>
                     <th>Référence</th>
                     <th>Client</th>
+                    <th>Devis</th>
                     <th>Montant</th>
-                    <th>Statut paiement</th>
                     <th>Date</th>
                     <th>Actions</th>
                   </tr>
@@ -263,25 +209,13 @@ export function InvoicesPage() {
                         </div>
                       </td>
                       <td>{invoice.client.name}</td>
-                      <td className="font-medium">
-                        {Number(invoice.totalAmount).toFixed(2)} TND
+                      <td>
+                        {invoice.devis.length > 0
+                          ? invoice.devis.map(d => d.reference).join(', ')
+                          : '-'}
                       </td>
-                      <td style={{ textAlign: 'center' }}>
-                        {invoice.paymentStats ? (
-                          <div className="payment-status">
-                            <div className="payment-progress-mini">
-                              <div 
-                                className="payment-progress-bar" 
-                                style={{ width: `${invoice.paymentStats.percentPaid}%` }}
-                              />
-                            </div>
-                            <span className={`payment-badge ${invoice.paymentStats.isPaid ? 'paid' : 'partial'}`}>
-                              {invoice.paymentStats.isPaid ? 'Payé' : `${invoice.paymentStats.percentPaid.toFixed(0)}%`}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className="payment-badge unpaid">Non payé</span>
-                        )}
+                      <td className="font-medium">
+                        {Number(invoice.totalAmount).toFixed(3)} TND
                       </td>
                       <td>
                         <span className="table-date">
@@ -291,14 +225,6 @@ export function InvoicesPage() {
                       </td>
                       <td>
                         <div className="action-buttons">
-                          <button
-                            className="btn btn-primary btn-sm"
-                            onClick={() => setSelectedInvoice(invoice)}
-                            title="Gérer les paiements"
-                          >
-                            <DollarSign size={16} />
-                            Paiements
-                          </button>
                           <button
                             className="btn btn-secondary btn-sm"
                             onClick={() => handleDownloadPdf(invoice.id, invoice.reference)}
@@ -311,15 +237,13 @@ export function InvoicesPage() {
                             )}
                             PDF
                           </button>
-                          {(!invoice.paymentStats || invoice.paymentStats.totalPaid === 0) && (
-                            <button
-                              className="btn btn-danger btn-sm"
-                              onClick={() => handleDelete(invoice.id, invoice.reference)}
-                              title="Supprimer"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          )}
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleDelete(invoice.id, invoice.reference)}
+                            title="Supprimer"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -335,21 +259,9 @@ export function InvoicesPage() {
             <p>
               {searchQuery
                 ? 'Aucune facture ne correspond à votre recherche.'
-                : 'Les factures apparaîtront ici une fois que vous aurez converti des devis.'}
+                : 'Les factures apparaîtront ici une fois que vous aurez converti des devis depuis la Caisse.'}
             </p>
           </div>
-        )}
-
-        {selectedInvoice && (
-          <PaymentModal
-            invoiceId={selectedInvoice.id}
-            invoiceReference={selectedInvoice.reference}
-            totalAmount={Number(selectedInvoice.totalAmount)}
-            onClose={() => setSelectedInvoice(null)}
-            onSuccess={() => {
-              fetchInvoices();
-            }}
-          />
         )}
       </div>
     </>

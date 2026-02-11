@@ -26,7 +26,7 @@ const navItems = [
   { path: '/devis', icon: FileText, label: 'Devis' },
   { path: '/invoices', icon: Receipt, label: 'Factures' },
   { path: '/expenses', icon: Wallet, label: 'Dépenses', adminOnly: true },
-  { path: '/financial', icon: Receipt, label: 'Finances', adminOnly: true },
+  { path: '/financial', icon: Receipt, label: 'Caisse' },
   { path: '/settings', icon: Settings, label: 'Paramètres' },
 ];
 

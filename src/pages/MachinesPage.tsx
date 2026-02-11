@@ -52,6 +52,12 @@ const MACHINE_INFO: Record<MachineType, { icon: typeof Cpu; label: string; unit:
     unit: 'TND/m²',
     description: 'Vente de matériaux au m²',
   },
+  CUSTOM: {
+    icon: Layers,
+    label: 'Personnalisé',
+    unit: 'TND',
+    description: 'Devis personnalisé - articles libres',
+  },
 };
 
 interface EditPricingModalProps {
@@ -187,7 +193,7 @@ export function MachinesPage() {
         )}
 
         <div className="machines-pricing-grid">
-          {Object.entries(MACHINE_INFO).map(([type, info]) => {
+          {Object.entries(MACHINE_INFO).filter(([type]) => type !== 'CUSTOM').map(([type, info]) => {
             const pricing = pricings.find((p) => p.machineType === type);
             const Icon = info.icon;
 

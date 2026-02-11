@@ -21,6 +21,7 @@ const MACHINE_LABELS: Record<MachineType, string> = {
   PANNEAUX: 'Panneaux',
   SERVICE_MAINTENANCE: 'Service Maintenance',
   VENTE_MATERIAU: 'Vente Matériau',
+  CUSTOM: 'Personnalisé',
 };
 
 const ALL_MACHINES: MachineType[] = ['CNC', 'LASER', 'CHAMPS', 'PANNEAUX', 'SERVICE_MAINTENANCE', 'VENTE_MATERIAU'];
@@ -241,16 +242,16 @@ function DeleteConfirmModal({ employee, onClose, onConfirm }: DeleteConfirmModal
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal modal-sm" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2 className="modal-title">Désactiver l'employé</h2>
+          <h2 className="modal-title">Supprimer l'employé</h2>
           <button className="btn btn-ghost btn-icon" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
         <div className="modal-body">
           <p>
-            Êtes-vous sûr de vouloir désactiver <strong>{employee.firstName} {employee.lastName}</strong> ?
+            Êtes-vous sûr de vouloir supprimer <strong>{employee.firstName} {employee.lastName}</strong> ?
           </p>
-          <p className="text-muted mt-2">L'employé ne pourra plus se connecter.</p>
+          <p className="text-muted mt-2">Cette action est irréversible. Toutes les données de cet employé seront supprimées.</p>
         </div>
         <div className="modal-footer">
           <button className="btn btn-secondary" onClick={onClose}>
@@ -258,7 +259,7 @@ function DeleteConfirmModal({ employee, onClose, onConfirm }: DeleteConfirmModal
           </button>
           <button className="btn btn-danger" onClick={handleConfirm} disabled={loading}>
             {loading ? <span className="spinner" /> : null}
-            Désactiver
+            Supprimer
           </button>
         </div>
       </div>
@@ -319,10 +320,8 @@ export function EmployeesPage() {
 
   const handleDelete = async () => {
     if (!deletingEmployee) return;
-    await usersApi.deactivate(deletingEmployee.id);
-    setEmployees(employees.map((e) => 
-      e.id === deletingEmployee.id ? { ...e, isActive: false } : e
-    ));
+    await usersApi.delete(deletingEmployee.id);
+    setEmployees(employees.filter((e) => e.id !== deletingEmployee.id));
   };
 
   const openEditModal = (employee: User) => {
@@ -453,7 +452,7 @@ export function EmployeesPage() {
                           <button
                             className="btn btn-ghost btn-icon"
                             onClick={() => setDeletingEmployee(employee)}
-                            title="Désactiver"
+                            title="Supprimer"
                           >
                             <Trash2 size={18} />
                           </button>

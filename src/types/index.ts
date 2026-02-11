@@ -1,7 +1,7 @@
 // API Types matching backend responses
 
 export type UserRole = 'SUPERADMIN' | 'ADMIN' | 'EMPLOYEE';
-export type MachineType = 'CNC' | 'LASER' | 'CHAMPS' | 'PANNEAUX' | 'SERVICE_MAINTENANCE' | 'VENTE_MATERIAU';
+export type MachineType = 'CNC' | 'LASER' | 'CHAMPS' | 'PANNEAUX' | 'SERVICE_MAINTENANCE' | 'VENTE_MATERIAU' | 'CUSTOM';
 export type DevisStatus = 'DRAFT' | 'VALIDATED' | 'INVOICED' | 'CANCELLED';
 
 export interface User {
@@ -182,6 +182,13 @@ export interface DashboardStats {
         expenses: number;
     }[];
     expensesByCategory: Record<string, number>;
+    unpaidClients: {
+        clientId: string;
+        clientName: string;
+        totalAmount: number;
+        totalPaid: number;
+        remaining: number;
+    }[];
 }
 
 export interface AuthResponse {
@@ -244,43 +251,35 @@ export interface ClientBalancePayment {
     paymentMethod?: string;
     reference?: string;
     notes?: string;
+    createdBy?: { firstName: string; lastName: string };
 }
 
-export interface ClientBalanceInvoice {
-    id: string;
-    reference: string;
-    totalAmount: number;
-    paidAmount: number;
-    balance: number;
-    createdAt: string;
-    devisCount: number;
-    payments: ClientBalancePayment[];
-}
-
-export interface ClientBalancePendingDevis {
+export interface ClientBalanceDevis {
     id: string;
     reference: string;
     status: string;
     totalAmount: number;
+    paidAmount: number;
+    remaining: number;
+    isFullyPaid: boolean;
     createdAt: string;
+    createdBy?: { firstName: string; lastName: string; role: string };
+    invoice?: { id: string; reference: string; createdAt: string } | null;
+    lines: { id: string; machineType: string; description?: string; lineTotal: number; material?: { name: string } | null }[];
+    services: { id: string; price: number; service?: { name: string; price: number } | null }[];
+    payments: ClientBalancePayment[];
 }
 
 export interface ClientBalanceData {
-    client: {
-        id: string;
-        name: string;
-        phone?: string;
-        email?: string;
-    };
     summary: {
-        totalInvoiced: number;
+        totalDevisAmount: number;
         totalPaid: number;
         outstandingBalance: number;
-        pendingDevisTotal: number;
-        pendingDevisCount: number;
+        devisCount: number;
+        fullyPaidCount: number;
+        pendingPaymentCount: number;
     };
-    invoices: ClientBalanceInvoice[];
-    pendingDevis: ClientBalancePendingDevis[];
+    devis: ClientBalanceDevis[];
 }
 
 export type ExpenseCategory =

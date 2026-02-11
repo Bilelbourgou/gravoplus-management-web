@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users,
   Plus,
@@ -11,16 +11,17 @@ import {
   MapPin,
   FileText,
   Wallet,
-  Calendar,
-  CreditCard,
-  FileCheck,
   Receipt,
   Check,
   Ban,
+  DollarSign,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { clientsApi, devisApi, invoicesApi, materialsApi, servicesApi } from '../services';
-import type { Client, CreateClientFormData, ClientBalanceData, Devis, Material, FixedService, AddDevisLineFormData, MachineType, DevisStatus } from '../types';
+import { financialService } from '../services/financial.service';
+import type { Client, CreateClientFormData, ClientBalanceData, ClientBalanceDevis, Devis, Material, FixedService, AddDevisLineFormData, MachineType, DevisStatus } from '../types';
 import './ClientsPage.css';
 import '../pages/DevisPage.css';
 
@@ -38,6 +39,7 @@ const MACHINE_LABELS: Record<MachineType, string> = {
   PANNEAUX: 'Panneaux',
   SERVICE_MAINTENANCE: 'Service Maintenance',
   VENTE_MATERIAU: 'Vente Matériau',
+  CUSTOM: 'Personnalisé',
 };
 
 interface ClientModalProps {
@@ -179,17 +181,15 @@ function ClientBalanceModal({ client, onClose }: ClientBalanceModalProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreateDevis, setShowCreateDevis] = useState(false);
-  const [showCreateInvoice, setShowCreateInvoice] = useState(false);
   const [creatingDevis, setCreatingDevis] = useState(false);
-  const [creatingInvoice, setCreatingInvoice] = useState(false);
   const [devisNotes, setDevisNotes] = useState('');
-  const [selectedDevisIds, setSelectedDevisIds] = useState<Set<string>>(new Set());
   const [materials, setMaterials] = useState<Material[]>([]);
   const [services, setServices] = useState<FixedService[]>([]);
   const [editingDevis, setEditingDevis] = useState<Devis | null>(null);
-  const [showManualInvoice, setShowManualInvoice] = useState(false);
-  const [creatingManualInvoice, setCreatingManualInvoice] = useState(false);
-  const [invoiceItems, setInvoiceItems] = useState<{ description: string; quantity: number; unitPrice: number }[]>([{ description: '', quantity: 1, unitPrice: 0 }]);
+  const [expandedDevisId, setExpandedDevisId] = useState<string | null>(null);
+  const [paymentDevis, setPaymentDevis] = useState<ClientBalanceDevis | null>(null);
+  const [paymentForm, setPaymentForm] = useState({ amount: 0, paymentMethod: 'Espèces', reference: '', notes: '' });
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   const fetchBalance = async () => {
     try {
@@ -228,7 +228,6 @@ function ClientBalanceModal({ client, onClose }: ClientBalanceModalProps) {
       const newDevis = await devisApi.create({ clientId: client.id, notes: devisNotes || undefined });
       setShowCreateDevis(false);
       setDevisNotes('');
-      // Fetch full devis details and open detail modal
       const fullDevis = await devisApi.getById(newDevis.id);
       setEditingDevis(fullDevis);
       await fetchBalance();
@@ -274,76 +273,37 @@ function ClientBalanceModal({ client, onClose }: ClientBalanceModalProps) {
     await devisApi.cancel(devisId);
   };
 
-  const handleCreateManualInvoice = async () => {
-    const validItems = invoiceItems.filter(item => item.description.trim() && item.quantity > 0 && item.unitPrice > 0);
-    if (validItems.length === 0) {
-      alert('Veuillez ajouter au moins un article valide avec un prix supérieur à 0');
-      return;
-    }
-    setCreatingManualInvoice(true);
+  const handleInvoiceDevis = async (devisId: string) => {
     try {
-      await invoicesApi.createDirect(client.id, validItems);
-      setShowManualInvoice(false);
-      setInvoiceItems([{ description: '', quantity: 1, unitPrice: 0 }]);
+      await invoicesApi.createFromDevis([devisId]);
       await fetchBalance();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erreur lors de la création de la facture');
-    } finally {
-      setCreatingManualInvoice(false);
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Erreur lors de la facturation');
     }
   };
 
-  const addInvoiceItem = () => {
-    setInvoiceItems([...invoiceItems, { description: '', quantity: 1, unitPrice: 0 }]);
-  };
-
-  const removeInvoiceItem = (index: number) => {
-    if (invoiceItems.length > 1) {
-      setInvoiceItems(invoiceItems.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateInvoiceItem = (index: number, field: keyof typeof invoiceItems[0], value: string | number) => {
-    const newItems = [...invoiceItems];
-    newItems[index] = { ...newItems[index], [field]: value };
-    setInvoiceItems(newItems);
-  };
-
-  const handleCreateInvoice = async () => {
-    if (selectedDevisIds.size === 0) {
-      alert('Veuillez sélectionner au moins un devis');
-      return;
-    }
-    setCreatingInvoice(true);
+  const handleCreatePayment = async () => {
+    if (!paymentDevis || paymentForm.amount <= 0) return;
+    setPaymentLoading(true);
     try {
-      await invoicesApi.createFromDevis(Array.from(selectedDevisIds));
-      setShowCreateInvoice(false);
-      setSelectedDevisIds(new Set());
+      await financialService.createCaissePayment({
+        amount: paymentForm.amount,
+        devisId: paymentDevis.id,
+        paymentMethod: paymentForm.paymentMethod,
+        reference: paymentForm.reference || undefined,
+        notes: paymentForm.notes || undefined,
+      });
+      setPaymentDevis(null);
+      setPaymentForm({ amount: 0, paymentMethod: 'Espèces', reference: '', notes: '' });
       await fetchBalance();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Erreur lors de la création de la facture');
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Erreur lors de l\'enregistrement du paiement');
     } finally {
-      setCreatingInvoice(false);
+      setPaymentLoading(false);
     }
   };
 
-  const toggleDevisSelection = (devisId: string) => {
-    const newSelected = new Set(selectedDevisIds);
-    if (newSelected.has(devisId)) {
-      newSelected.delete(devisId);
-    } else {
-      newSelected.add(devisId);
-    }
-    setSelectedDevisIds(newSelected);
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-TN', {
-      style: 'currency',
-      currency: 'TND',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number) => `${amount.toFixed(3)} TND`;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -353,173 +313,223 @@ function ClientBalanceModal({ client, onClose }: ClientBalanceModalProps) {
     });
   };
 
+  const statusBadgeClass = (status: string) => {
+    switch (status) {
+      case 'DRAFT': return 'badge badge-draft';
+      case 'VALIDATED': return 'badge badge-validated';
+      case 'INVOICED': return 'badge badge-invoiced';
+      case 'CANCELLED': return 'badge badge-cancelled';
+      default: return 'badge';
+    }
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal modal-lg" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '900px' }}>
+      <div className="modal modal-lg" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '950px' }}>
         <div className="modal-header">
           <h2 className="modal-title">
             <Wallet size={24} style={{ marginRight: '8px' }} />
-            Solde Client - {client.name}
+            Solde Client — {client.name}
           </h2>
           <button className="btn btn-ghost btn-icon" onClick={onClose}>
             <X size={20} />
           </button>
         </div>
 
-        <div className="modal-body">
+        <div className="modal-body" style={{ padding: 0 }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '40px' }}>
               <div className="spinner" />
               <p>Chargement du solde...</p>
             </div>
           ) : error ? (
-            <div className="alert alert-error">{error}</div>
+            <div className="alert alert-error" style={{ margin: 'var(--space-4)' }}>{error}</div>
           ) : balanceData ? (
-            <div>
+            <>
               {/* Summary Cards */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-                <div className="stat-card" style={{ padding: '16px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '4px' }}>Total Facturé</div>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#0066cc' }}>
-                    {formatCurrency(balanceData.summary.totalInvoiced)}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: 'var(--space-4)', padding: 'var(--space-6)' }}>
+                <div className="stat-card">
+                  <div className="stat-label">Total Devis</div>
+                  <div className="stat-value" style={{ fontSize: 'var(--text-2xl)', color: 'var(--color-primary-400)' }}>
+                    {formatCurrency(balanceData.summary.totalDevisAmount)}
                   </div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: '2px' }}>{balanceData.summary.devisCount} devis</div>
                 </div>
-                <div className="stat-card" style={{ padding: '16px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '4px' }}>Total Payé</div>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#28a745' }}>
+                <div className="stat-card">
+                  <div className="stat-label">Total Payé</div>
+                  <div className="stat-value" style={{ fontSize: 'var(--text-2xl)', color: 'var(--color-primary-400)' }}>
                     {formatCurrency(balanceData.summary.totalPaid)}
                   </div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: '2px' }}>{balanceData.summary.fullyPaidCount} payé(s)</div>
                 </div>
-                <div className="stat-card" style={{ padding: '16px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '4px' }}>Solde Restant</div>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: balanceData.summary.outstandingBalance > 0 ? '#dc3545' : '#28a745' }}>
+                <div className="stat-card">
+                  <div className="stat-label">Reste à Payer</div>
+                  <div className="stat-value" style={{ fontSize: 'var(--text-2xl)', color: balanceData.summary.outstandingBalance > 0 ? 'var(--color-error-500)' : 'var(--color-primary-400)' }}>
                     {formatCurrency(balanceData.summary.outstandingBalance)}
                   </div>
-                </div>
-                <div className="stat-card" style={{ padding: '16px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '4px' }}>Devis en Attente</div>
-                  <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ffc107' }}>
-                    {balanceData.summary.pendingDevisCount}
-                  </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    {formatCurrency(balanceData.summary.pendingDevisTotal)}
-                  </div>
+                  <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: '2px' }}>{balanceData.summary.pendingPaymentCount} en attente</div>
                 </div>
               </div>
 
-              {/* Invoices Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px', display: 'flex', alignItems: 'center' }}>
-                  <FileCheck size={20} style={{ marginRight: '8px' }} />
-                  Factures ({balanceData.invoices.length})
+              {/* Devis List */}
+              <div style={{ padding: '0 var(--space-6) var(--space-4)' }}>
+                <h3 style={{ fontSize: 'var(--text-base)', fontWeight: 600, marginBottom: 'var(--space-3)', display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                  <FileText size={18} />
+                  Devis ({balanceData.devis.length})
                 </h3>
-                {balanceData.invoices.length > 0 ? (
-                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
-                    {balanceData.invoices.map((invoice) => (
-                      <div key={invoice.id} style={{ border: '1px solid var(--border-subtle)', borderRadius: '8px', padding: '16px', marginBottom: '12px', background: 'var(--bg-surface)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                          <div>
-                            <div style={{ fontWeight: '600', fontSize: '16px' }}>{invoice.reference}</div>
-                            <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
-                              <Calendar size={14} style={{ display: 'inline', marginRight: '4px' }} />
-                              {formatDate(invoice.createdAt)}
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>Total: {formatCurrency(invoice.totalAmount)}</div>
-                            <div style={{ fontSize: '14px', color: '#28a745' }}>Payé: {formatCurrency(invoice.paidAmount)}</div>
-                            <div style={{ fontSize: '16px', fontWeight: 'bold', color: invoice.balance > 0 ? '#dc3545' : '#28a745' }}>
-                              Reste: {formatCurrency(invoice.balance)}
-                            </div>
-                          </div>
-                        </div>
-                        {invoice.payments.length > 0 && (
-                          <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '12px' }}>
-                            <div style={{ fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: 'var(--text-muted)' }}>
-                              <CreditCard size={14} style={{ display: 'inline', marginRight: '4px' }} />
-                              Paiements ({invoice.payments.length})
-                            </div>
-                            <div style={{ display: 'grid', gap: '8px' }}>
-                              {invoice.payments.map((payment) => (
-                                <div key={payment.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '8px', background: 'var(--bg-elevated)', borderRadius: '4px' }}>
-                                  <div>
-                                    <span style={{ fontWeight: '500' }}>{formatDate(payment.paymentDate)}</span>
-                                    {payment.paymentMethod && <span style={{ color: 'var(--text-muted)', marginLeft: '8px' }}>({payment.paymentMethod})</span>}
-                                    {payment.reference && <span style={{ color: 'var(--text-muted)', marginLeft: '8px' }}>Réf: {payment.reference}</span>}
-                                  </div>
-                                  <span style={{ fontWeight: '600', color: '#28a745' }}>{formatCurrency(payment.amount)}</span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
-                    <FileCheck size={48} strokeWidth={1} />
-                    <p>Aucune facture</p>
-                  </div>
-                )}
               </div>
 
-              {/* Pending Devis Section */}
-              {balanceData.pendingDevis.length > 0 && (
-                <div>
-                  <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '12px', display: 'flex', alignItems: 'center' }}>
-                    <FileText size={20} style={{ marginRight: '8px' }} />
-                    Devis en Attente ({balanceData.pendingDevis.length})
-                  </h3>
-                  <div style={{ display: 'grid', gap: '8px' }}>
-                    {balanceData.pendingDevis.map((devis) => (
-                      <div key={devis.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', border: '1px solid var(--border-subtle)', borderRadius: '6px', background: 'var(--bg-surface)' }}>
-                        <div>
-                          <span style={{ fontWeight: '600' }}>{devis.reference}</span>
-                          <span style={{ marginLeft: '12px', fontSize: '12px', padding: '2px 8px', borderRadius: '12px', background: devis.status === 'VALIDATED' ? '#d4edda' : '#e2e3e5', color: devis.status === 'VALIDATED' ? '#155724' : '#383d41' }}>
-                            {devis.status}
-                          </span>
-                          <span style={{ marginLeft: '12px', fontSize: '14px', color: 'var(--text-muted)' }}>{formatDate(devis.createdAt)}</span>
-                        </div>
-                        <span style={{ fontWeight: '600', color: '#ffc107' }}>{formatCurrency(devis.totalAmount)}</span>
-                      </div>
-                    ))}
-                  </div>
+              {balanceData.devis.length > 0 ? (
+                <div className="table-container" style={{ borderRadius: 0, border: 'none', borderTop: '1px solid var(--border-subtle)' }}>
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: 30 }}></th>
+                        <th>Référence</th>
+                        <th>Statut</th>
+                        <th style={{ textAlign: 'right' }}>Montant</th>
+                        <th style={{ textAlign: 'right' }}>Payé</th>
+                        <th style={{ textAlign: 'right' }}>Reste</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {balanceData.devis.map((d) => {
+                        const isExpanded = expandedDevisId === d.id;
+                        return (
+                          <React.Fragment key={d.id}>
+                            <tr style={{ cursor: 'pointer' }} onClick={() => setExpandedDevisId(isExpanded ? null : d.id)}>
+                              <td>{isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</td>
+                              <td className="font-semibold">{d.reference}</td>
+                              <td><span className={statusBadgeClass(d.status)}>{STATUS_LABELS[d.status as DevisStatus] || d.status}</span></td>
+                              <td style={{ textAlign: 'right' }} className="font-semibold">{formatCurrency(d.totalAmount)}</td>
+                              <td style={{ textAlign: 'right', color: 'var(--color-primary-400)' }} className="font-semibold">{formatCurrency(d.paidAmount)}</td>
+                              <td style={{ textAlign: 'right', color: d.remaining > 0 ? 'var(--color-error-500)' : 'var(--color-primary-400)', fontWeight: 600 }}>{formatCurrency(d.remaining)}</td>
+                              <td style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{formatDate(d.createdAt)}</td>
+                              <td onClick={(e) => e.stopPropagation()}>
+                                <div style={{ display: 'flex', gap: 4 }}>
+                                  {d.status === 'VALIDATED' && !d.isFullyPaid && (
+                                    <button className="btn btn-secondary btn-sm" onClick={() => { setPaymentDevis(d); setPaymentForm({ amount: 0, paymentMethod: 'Espèces', reference: '', notes: '' }); }} title="Paiement">
+                                      <DollarSign size={14} />
+                                    </button>
+                                  )}
+                                  {d.status === 'VALIDATED' && d.isFullyPaid && !d.invoice && (
+                                    <button className="btn btn-primary btn-sm" onClick={() => handleInvoiceDevis(d.id)} title="Facturer">
+                                      <Receipt size={14} />
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                            {isExpanded && (
+                              <tr>
+                                <td colSpan={8} style={{ padding: 0 }}>
+                                  <div className="devis-detail-panel">
+                                    <div className="devis-detail-grid">
+                                      {/* Lines & Services */}
+                                      <div className="devis-detail-section">
+                                        <h4>Lignes du devis</h4>
+                                        {d.lines.length > 0 ? (
+                                          <table className="detail-table">
+                                            <thead><tr><th>Machine</th><th>Description</th><th style={{ textAlign: 'right' }}>Total</th></tr></thead>
+                                            <tbody>
+                                              {d.lines.map(l => (
+                                                <tr key={l.id}>
+                                                  <td><span className="badge badge-info">{l.machineType}</span></td>
+                                                  <td>{l.description || '-'}{l.material ? ` (${l.material.name})` : ''}</td>
+                                                  <td style={{ textAlign: 'right' }} className="font-semibold">{l.lineTotal.toFixed(3)}</td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                          </table>
+                                        ) : <p className="no-data-msg">Aucune ligne</p>}
+
+                                        {d.services.length > 0 && (
+                                          <>
+                                            <h4 style={{ marginTop: 'var(--space-4)' }}>Services</h4>
+                                            <table className="detail-table">
+                                              <thead><tr><th>Service</th><th style={{ textAlign: 'right' }}>Prix</th></tr></thead>
+                                              <tbody>
+                                                {d.services.map(s => (
+                                                  <tr key={s.id}>
+                                                    <td>{s.service?.name || '-'}</td>
+                                                    <td style={{ textAlign: 'right' }} className="font-semibold">{s.price.toFixed(3)}</td>
+                                                  </tr>
+                                                ))}
+                                              </tbody>
+                                            </table>
+                                          </>
+                                        )}
+                                      </div>
+
+                                      {/* Payments */}
+                                      <div className="devis-detail-section">
+                                        {d.invoice && (
+                                          <div className="invoice-info-card">
+                                            <Receipt size={16} />
+                                            <span>{d.invoice.reference} — {formatDate(d.invoice.createdAt)}</span>
+                                          </div>
+                                        )}
+
+                                        <h4>Paiements ({d.payments.length})</h4>
+                                        {d.payments.length > 0 ? (
+                                          <>
+                                            <table className="detail-table">
+                                              <thead><tr><th>Date</th><th>Mode</th><th>Par</th><th style={{ textAlign: 'right' }}>Montant</th></tr></thead>
+                                              <tbody>
+                                                {d.payments.map(p => (
+                                                  <tr key={p.id}>
+                                                    <td>{formatDate(p.paymentDate)}</td>
+                                                    <td>{p.paymentMethod || 'Espèces'}</td>
+                                                    <td>{p.createdBy ? `${p.createdBy.firstName} ${p.createdBy.lastName}` : '-'}</td>
+                                                    <td style={{ textAlign: 'right' }} className="amount green font-semibold">+{p.amount.toFixed(3)}</td>
+                                                  </tr>
+                                                ))}
+                                              </tbody>
+                                            </table>
+                                            <div className="payment-total-row">
+                                              <span>Total payé: <span className="paid-amount">{d.paidAmount.toFixed(3)} TND</span></span>
+                                              <span className="total-amount">/ {d.totalAmount.toFixed(3)} TND</span>
+                                            </div>
+                                          </>
+                                        ) : <p className="no-data-msg">Aucun paiement enregistré</p>}
+
+                                        {d.status === 'VALIDATED' && !d.isFullyPaid && (
+                                          <button className="btn btn-secondary btn-sm" style={{ marginTop: 'var(--space-3)' }} onClick={() => { setPaymentDevis(d); setPaymentForm({ amount: 0, paymentMethod: 'Espèces', reference: '', notes: '' }); }}>
+                                            <DollarSign size={14} /> Ajouter un paiement
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: 'var(--space-10)', color: 'var(--text-muted)' }}>
+                  <FileText size={48} strokeWidth={1} />
+                  <p>Aucun devis pour ce client</p>
                 </div>
               )}
-            </div>
+            </>
           ) : null}
         </div>
 
         <div className="modal-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              className="btn btn-primary"
-              onClick={() => setShowCreateDevis(true)}
-              title="Créer un nouveau devis pour ce client"
-            >
-              <Plus size={18} style={{ marginRight: '4px' }} />
-              Nouveau Devis
-            </button>
-            <button
-              className="btn btn-secondary"
-              onClick={() => setShowManualInvoice(true)}
-              title="Créer une facture directe sans devis"
-            >
-              <Receipt size={18} style={{ marginRight: '4px' }} />
-              Facture Directe
-            </button>
-            {balanceData && balanceData.pendingDevis.filter(d => d.status === 'VALIDATED').length > 0 && (
-              <button
-                className="btn btn-success"
-                onClick={() => setShowCreateInvoice(true)}
-                title="Créer une facture à partir des devis validés"
-              >
-                <Receipt size={18} style={{ marginRight: '4px' }} />
-                Facture depuis Devis
-              </button>
-            )}
-          </div>
+          <button
+            className="btn btn-primary"
+            onClick={() => setShowCreateDevis(true)}
+            title="Créer un nouveau devis pour ce client"
+          >
+            <Plus size={18} /> Nouveau Devis
+          </button>
           <button className="btn btn-secondary" onClick={onClose}>
             Fermer
           </button>
@@ -562,190 +572,102 @@ function ClientBalanceModal({ client, onClose }: ClientBalanceModalProps) {
         </div>
       )}
 
-      {/* Manual Invoice Modal */}
-      {showManualInvoice && (
-        <div className="modal-overlay" onClick={() => setShowManualInvoice(false)} style={{ zIndex: 1001 }}>
-          <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Facture Directe - {client.name}</h2>
-              <button className="btn btn-ghost btn-icon" onClick={() => setShowManualInvoice(false)}>
-                <X size={20} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
-                Créez une facture personnalisée avec vos propres articles.
-              </p>
-              <div style={{ display: 'grid', gap: '16px' }}>
-                {invoiceItems.map((item, index) => (
-                  <div key={index} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '8px', padding: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label">Description</label>
-                      <input
-                        type="text"
-                        className="form-input"
-                        placeholder="Description de l'article..."
-                        value={item.description}
-                        onChange={(e) => updateInvoiceItem(index, 'description', e.target.value)}
-                      />
-                    </div>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label">Quantité</label>
-                      <input
-                        type="number"
-                        className="form-input"
-                        placeholder="1"
-                        min="0.01"
-                        step="0.01"
-                        value={item.quantity}
-                        onChange={(e) => updateInvoiceItem(index, 'quantity', parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label className="form-label">Prix Unitaire (TND)</label>
-                      <input
-                        type="number"
-                        className="form-input"
-                        placeholder="0.00"
-                        min="0.01"
-                        step="0.01"
-                        value={item.unitPrice || ''}
-                        onChange={(e) => updateInvoiceItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                      <button
-                        className="btn btn-ghost btn-icon"
-                        onClick={() => removeInvoiceItem(index)}
-                        disabled={invoiceItems.length === 1}
-                        title="Supprimer l'article"
-                      >
-                        <Trash2 size={18} />
-                      </button>
+      {/* Payment Modal */}
+      {paymentDevis && (() => {
+        const remaining = paymentDevis.remaining;
+        const amountExceeds = paymentForm.amount > remaining;
+
+        return (
+          <div className="modal-overlay" onClick={() => setPaymentDevis(null)} style={{ zIndex: 1001 }}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Paiement — {paymentDevis.reference}</h2>
+                <button className="close-btn" onClick={() => setPaymentDevis(null)}>×</button>
+              </div>
+              <div className="modal-body">
+                <div className="closure-summary">
+                  <div className="summary-row">
+                    <span>Montant total:</span>
+                    <span className="font-semibold">{paymentDevis.totalAmount.toFixed(3)} TND</span>
+                  </div>
+                  <div className="summary-row">
+                    <span>Déjà payé:</span>
+                    <span className="amount green font-semibold">{paymentDevis.paidAmount.toFixed(3)} TND</span>
+                  </div>
+                  <div className="summary-row total">
+                    <span>Reste à payer:</span>
+                    <span className="amount red">{remaining.toFixed(3)} TND</span>
+                  </div>
+                </div>
+
+                {paymentDevis.payments.length > 0 && (
+                  <div style={{ marginTop: 'var(--space-4)' }}>
+                    <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-2)' }}>Historique des paiements</h4>
+                    <div className="devis-detail-section">
+                      <table className="detail-table">
+                        <thead><tr><th>Date</th><th>Mode</th><th>Par</th><th style={{ textAlign: 'right' }}>Montant</th></tr></thead>
+                        <tbody>
+                          {paymentDevis.payments.map(p => (
+                            <tr key={p.id}>
+                              <td>{formatDate(p.paymentDate)}</td>
+                              <td>{p.paymentMethod || 'Espèces'}</td>
+                              <td>{p.createdBy ? `${p.createdBy.firstName} ${p.createdBy.lastName}` : '-'}</td>
+                              <td style={{ textAlign: 'right' }} className="amount green font-semibold">+{p.amount.toFixed(3)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                ))}
-                <button
-                  className="btn btn-secondary"
-                  onClick={addInvoiceItem}
-                  style={{ justifySelf: 'start' }}
-                >
-                  <Plus size={18} style={{ marginRight: '4px' }} />
-                  Ajouter un article
+                )}
+
+                <div className="form-group mt-4">
+                  <label>Montant * <span className="text-muted" style={{ fontWeight: 400 }}>(max: {remaining.toFixed(3)} TND)</span></label>
+                  <input
+                    type="number"
+                    className="form-control"
+                    step="0.001"
+                    min="0"
+                    max={remaining}
+                    value={paymentForm.amount || ''}
+                    onChange={(e) => setPaymentForm({ ...paymentForm, amount: parseFloat(e.target.value) || 0 })}
+                    placeholder="0.000"
+                  />
+                  {amountExceeds && (
+                    <p className="form-error" style={{ marginTop: 'var(--space-1)' }}>Le montant dépasse le reste à payer ({remaining.toFixed(3)} TND)</p>
+                  )}
+                </div>
+
+                <div className="form-group mt-4">
+                  <label>Mode de paiement</label>
+                  <select className="form-control" value={paymentForm.paymentMethod} onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}>
+                    <option value="Espèces">Espèces</option>
+                    <option value="Chèque">Chèque</option>
+                    <option value="Virement">Virement</option>
+                    <option value="Carte">Carte</option>
+                  </select>
+                </div>
+
+                <div className="form-group mt-4">
+                  <label>Référence</label>
+                  <input type="text" className="form-control" value={paymentForm.reference} onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })} placeholder="N° chèque, réf. virement..." />
+                </div>
+
+                <div className="form-group mt-4">
+                  <label>Notes</label>
+                  <textarea className="form-control" rows={2} value={paymentForm.notes} onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })} placeholder="Notes..." />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-ghost" onClick={() => setPaymentDevis(null)} disabled={paymentLoading}>Annuler</button>
+                <button className="btn btn-primary" onClick={handleCreatePayment} disabled={paymentLoading || paymentForm.amount <= 0 || amountExceeds}>
+                  {paymentLoading ? 'Enregistrement...' : 'Enregistrer'}
                 </button>
               </div>
-              <div style={{ marginTop: '24px', padding: '16px', background: 'var(--bg-elevated)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '18px', fontWeight: '600' }}>Total:</span>
-                <span style={{ fontSize: '24px', fontWeight: 'bold', color: 'var(--color-primary-500)' }}>
-                  {formatCurrency(
-                    invoiceItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0)
-                  )}
-                </span>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowManualInvoice(false)} disabled={creatingManualInvoice}>
-                Annuler
-              </button>
-              <button className="btn btn-primary" onClick={handleCreateManualInvoice} disabled={creatingManualInvoice}>
-                {creatingManualInvoice ? <span className="spinner" style={{ width: '16px', height: '16px' }} /> : null}
-                Créer la facture
-              </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Create Invoice Modal */}
-      {showCreateInvoice && balanceData && (
-        <div className="modal-overlay" onClick={() => setShowCreateInvoice(false)} style={{ zIndex: 1001 }}>
-          <div className="modal modal-lg" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2 className="modal-title">Créer une Facture - {client.name}</h2>
-              <button className="btn btn-ghost btn-icon" onClick={() => setShowCreateInvoice(false)}>
-                <X size={20} />
-              </button>
-            </div>
-            <div className="modal-body">
-              <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>
-                Sélectionnez les devis validés à inclure dans la facture.
-              </p>
-              {balanceData.pendingDevis.filter(d => d.status === 'VALIDATED').length > 0 ? (
-                <div style={{ display: 'grid', gap: '8px' }}>
-                  {balanceData.pendingDevis.filter(d => d.status === 'VALIDATED').map((devis) => (
-                    <div
-                      key={devis.id}
-                      onClick={() => toggleDevisSelection(devis.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '12px',
-                        border: `2px solid ${selectedDevisIds.has(devis.id) ? 'var(--color-primary-500)' : 'var(--border-subtle)'}`,
-                        borderRadius: '6px',
-                        background: selectedDevisIds.has(devis.id) ? 'var(--bg-elevated)' : 'var(--bg-surface)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div
-                          style={{
-                            width: '20px',
-                            height: '20px',
-                            borderRadius: '4px',
-                            border: '2px solid var(--color-primary-500)',
-                            background: selectedDevisIds.has(devis.id) ? 'var(--color-primary-500)' : 'transparent',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: 'white',
-                          }}
-                        >
-                          {selectedDevisIds.has(devis.id) && <Check size={14} />}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: '600' }}>{devis.reference}</div>
-                          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{formatDate(devis.createdAt)}</div>
-                        </div>
-                      </div>
-                      <div style={{ fontWeight: '600', color: 'var(--color-primary-500)' }}>
-                        {formatCurrency(devis.totalAmount)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
-                  <Receipt size={48} strokeWidth={1} />
-                  <p>Aucun devis validé disponible</p>
-                </div>
-              )}
-              {selectedDevisIds.size > 0 && (
-                <div style={{ marginTop: '16px', padding: '12px', background: 'var(--bg-elevated)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontWeight: '600' }}>Total sélectionné:</span>
-                  <span style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--color-primary-500)' }}>
-                    {formatCurrency(
-                      balanceData.pendingDevis
-                        .filter(d => selectedDevisIds.has(d.id))
-                        .reduce((sum, d) => sum + d.totalAmount, 0)
-                    )}
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowCreateInvoice(false)} disabled={creatingInvoice}>
-                Annuler
-              </button>
-              <button className="btn btn-success" onClick={handleCreateInvoice} disabled={creatingInvoice || selectedDevisIds.size === 0}>
-                {creatingInvoice ? <span className="spinner" style={{ width: '16px', height: '16px' }} /> : null}
-                Créer la facture ({selectedDevisIds.size})
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Devis Detail Modal */}
       {editingDevis && (

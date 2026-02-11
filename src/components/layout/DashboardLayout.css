@@ -9,6 +9,12 @@
   transition: margin-left var(--transition-normal);
   background: var(--bg-base);
   min-height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.main-content::-webkit-scrollbar {
+  display: none;
 }
 
 /* When sidebar is collapsed */

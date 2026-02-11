@@ -1,5 +1,23 @@
 
 import api from './api';
+import type { ApiResponse, Devis } from '../types';
+
+export interface CaisseDevis extends Devis {
+    createdBy: {
+        id: string;
+        firstName: string;
+        lastName: string;
+        role: string;
+    };
+    payments: Array<{
+        id: string;
+        amount: number;
+        paymentDate: string;
+        paymentMethod?: string;
+        reference?: string;
+        createdBy?: { firstName: string; lastName: string };
+    }>;
+}
 
 export interface FinancialStats {
     periodStart: string | null;
@@ -7,7 +25,7 @@ export interface FinancialStats {
     totalIncome: number;
     totalExpense: number;
     balance: number;
-    scope?: string; // "ADMIN_LEVEL" | "EMPLOYEE_LEVEL"
+    scope?: string;
     lastClosureDate: string | null;
     payments: Array<{
         id: string;
@@ -15,7 +33,12 @@ export interface FinancialStats {
         paymentMethod: string;
         paymentDate: string;
         reference: string;
-        invoice: {
+        description?: string;
+        invoice?: {
+            reference: string;
+            client: { name: string };
+        };
+        devis?: {
             reference: string;
             client: { name: string };
         };
@@ -57,7 +80,27 @@ export interface FinancialClosure {
     };
 }
 
+export interface CreateCaissePaymentData {
+    amount: number;
+    devisId?: string;
+    description?: string;
+    paymentDate?: string;
+    paymentMethod?: string;
+    reference?: string;
+    notes?: string;
+}
+
 export const financialService = {
+    getCaisseDevis: async (): Promise<CaisseDevis[]> => {
+        const response = await api.get<ApiResponse<CaisseDevis[]>>('/financial/caisse');
+        return response.data.data!;
+    },
+
+    createCaissePayment: async (data: CreateCaissePaymentData) => {
+        const response = await api.post<ApiResponse<any>>('/payments/caisse', data);
+        return response.data.data!;
+    },
+
     getStats: async (): Promise<FinancialStats> => {
         const response = await api.get('/financial/stats');
         return response.data;
