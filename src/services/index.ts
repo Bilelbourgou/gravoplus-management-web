@@ -360,3 +360,17 @@ export const notificationsApi = {
         await api.delete(`/notifications/${id}`);
     },
 };
+
+// ==================== Rapport ====================
+
+export const rapportApi = {
+    getYearly: async (year: number): Promise<any> => {
+        const res = await api.get('/rapport/yearly', { params: { year } });
+        return res.data;
+    },
+
+    cleanYear: async (year: number): Promise<any> => {
+        const res = await api.post('/rapport/clean', null, { params: { year } });
+        return res.data;
+    },
+};

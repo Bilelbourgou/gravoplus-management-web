@@ -8,3 +8,4 @@ export { InvoicesPage } from './InvoicesPage';
 export { SettingsPage } from './SettingsPage';
 export { ExpensesPage } from './ExpensesPage';
 export { default as FinancialPage } from './FinancialPage';
+export { RapportPage } from './RapportPage';

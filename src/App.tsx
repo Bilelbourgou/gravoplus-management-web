@@ -14,6 +14,7 @@ import {
   ExpensesPage,
   FinancialPage
 } from './pages';
+import { RapportPage } from './pages';
 import './App.css';
 
 const queryClient = new QueryClient({
@@ -68,6 +69,7 @@ function App() {
               <Route path="/invoices" element={<InvoicesPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/financial" element={<FinancialPage />} />
+              <Route path="/rapport" element={<RapportPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>
           </Route>

@@ -37,6 +37,7 @@ const STATUS_COLORS: Record<string, string> = {
 const FinancialPage: React.FC = () => {
   const { user } = useAuthStore();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
+  const isSuperAdmin = user?.role === 'SUPERADMIN';
 
   const [caisseDevis, setCaisseDevis] = useState<CaisseDevis[]>([]);
   const [stats, setStats] = useState<FinancialStats | null>(null);
@@ -228,14 +229,16 @@ const FinancialPage: React.FC = () => {
                 Ouverture: {stats?.periodStart ? formatDate(stats.periodStart) : 'Première Session'}
               </p>
             </div>
-            <button 
-              className="btn btn-primary"
-              onClick={() => setOpenClosureDialog(true)}
-              disabled={stats?.balance === 0 && stats?.totalIncome === 0 && stats?.totalExpense === 0}
-            >
-              <Lock size={18} style={{ marginRight: '8px' }} />
-              Clôturer la Caisse
-            </button>
+            {isSuperAdmin && (
+              <button 
+                className="btn btn-primary"
+                onClick={() => setOpenClosureDialog(true)}
+                disabled={stats?.balance === 0 && stats?.totalIncome === 0 && stats?.totalExpense === 0}
+              >
+                <Lock size={18} style={{ marginRight: '8px' }} />
+                Clôturer la Caisse
+              </button>
+            )}
           </div>
         )}
 

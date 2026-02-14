@@ -13,6 +13,7 @@ import {
   Wallet,
   Menu,
   X,
+  BarChart3,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/auth.store';
@@ -27,6 +28,7 @@ const navItems = [
   { path: '/invoices', icon: Receipt, label: 'Factures' },
   { path: '/expenses', icon: Wallet, label: 'Dépenses', adminOnly: true },
   { path: '/financial', icon: Receipt, label: 'Caisse' },
+  { path: '/rapport', icon: BarChart3, label: 'Rapport Annuel', superAdminOnly: true },
   { path: '/settings', icon: Settings, label: 'Paramètres' },
 ];
 
@@ -106,7 +108,11 @@ export function Sidebar() {
 
         <nav className="sidebar-nav">
           {navItems
-  .filter((item) => !('adminOnly' in item) || !item.adminOnly || user?.role === 'ADMIN' || user?.role === 'SUPERADMIN')
+  .filter((item) => {
+    if ('superAdminOnly' in item && item.superAdminOnly) return user?.role === 'SUPERADMIN';
+    if ('adminOnly' in item && item.adminOnly) return user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
+    return true;
+  })
   .map((item) => (
               <NavLink
                 key={item.path}

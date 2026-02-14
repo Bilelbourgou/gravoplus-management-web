@@ -10,6 +10,7 @@ import {
 import { Header } from '../components/layout';
 import { DateRangeFilter } from '../components/common/DateRangeFilter';
 import { invoicesApi } from '../services';
+import { exportToExcel } from '../utils/exportExcel';
 import './InvoicesPage.css';
 
 interface InvoiceWithDevis {
@@ -173,6 +174,20 @@ export function InvoicesPage() {
             endDate={dateTo}
             onChange={handleDateRangeChange}
           />
+          <button className="btn btn-secondary" onClick={() => exportToExcel(
+            filteredInvoices,
+            [
+              { header: 'Référence', accessor: (inv) => inv.reference },
+              { header: 'Client', accessor: (inv) => inv.client.name },
+              { header: 'Devis associés', accessor: (inv) => inv.devis.map(d => d.reference).join(', ') || '-' },
+              { header: 'Montant (TND)', accessor: (inv) => Number(inv.totalAmount).toFixed(3) },
+              { header: 'Date', accessor: (inv) => new Date(inv.createdAt).toLocaleDateString('fr-FR') },
+            ],
+            'factures'
+          )}>
+            <Download size={18} />
+            Exporter Excel
+          </button>
         </div>
 
         {error && (

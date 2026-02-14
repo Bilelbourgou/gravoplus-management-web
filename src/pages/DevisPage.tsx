@@ -22,6 +22,7 @@ import { devisApi, clientsApi, servicesApi, materialsApi, invoicesApi } from '..
 import type { Devis, Client, DevisStatus, MachineType, FixedService, Material, AddDevisLineFormData } from '../types';
 import './DevisPage.css';
 import '../components/CreateInvoiceModal.css';
+import { exportToExcel } from '../utils/exportExcel';
 
 const STATUS_LABELS: Record<DevisStatus, string> = {
   DRAFT: 'Brouillon',
@@ -1169,6 +1170,21 @@ export function DevisPage() {
                 </div>
               )}
             </div>
+            <button className="btn btn-secondary" onClick={() => exportToExcel(
+              filteredDevis,
+              [
+                { header: 'Référence', accessor: (d) => d.reference },
+                { header: 'Client', accessor: (d) => d.client?.name || '' },
+                { header: 'Statut', accessor: (d) => STATUS_LABELS[d.status] || d.status },
+                { header: 'Montant (TND)', accessor: (d) => Number(d.totalAmount).toFixed(3) },
+                { header: 'Créé par', accessor: (d) => `${d.createdBy?.firstName || ''} ${d.createdBy?.lastName || ''}`.trim() },
+                { header: 'Date', accessor: (d) => new Date(d.createdAt).toLocaleDateString('fr-FR') },
+              ],
+              'devis'
+            )}>
+              <Download size={18} />
+              Exporter Excel
+            </button>
             {validatedDevis.length > 0 && (
               <button className="btn btn-success" onClick={() => setShowInvoiceModal(true)}>
                 <Receipt size={20} />

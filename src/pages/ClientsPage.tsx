@@ -13,6 +13,7 @@ import {
   Wallet,
   Receipt,
   Check,
+  Download,
   Ban,
   DollarSign,
   ChevronDown,
@@ -24,6 +25,7 @@ import { financialService } from '../services/financial.service';
 import type { Client, CreateClientFormData, ClientBalanceData, ClientBalanceDevis, Devis, Material, FixedService, AddDevisLineFormData, MachineType, DevisStatus } from '../types';
 import './ClientsPage.css';
 import '../pages/DevisPage.css';
+import { exportToExcel } from '../utils/exportExcel';
 
 const STATUS_LABELS: Record<DevisStatus, string> = {
   DRAFT: 'Brouillon',
@@ -1277,6 +1279,20 @@ export function ClientsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
+          <button className="btn btn-secondary" onClick={() => exportToExcel(
+            filteredClients,
+            [
+              { header: 'Nom', accessor: (c) => c.name },
+              { header: 'Téléphone', accessor: (c) => c.phone || '' },
+              { header: 'Email', accessor: (c) => c.email || '' },
+              { header: 'Adresse', accessor: (c) => c.address || '' },
+              { header: 'Date de création', accessor: (c) => new Date(c.createdAt).toLocaleDateString('fr-FR') },
+            ],
+            'clients'
+          )}>
+            <Download size={18} />
+            Exporter Excel
+          </button>
           <button className="btn btn-primary" onClick={openCreateModal}>
             <Plus size={20} />
             Nouveau client
