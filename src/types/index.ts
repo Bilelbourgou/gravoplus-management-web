@@ -1,7 +1,7 @@
 // API Types matching backend responses
 
 export type UserRole = 'SUPERADMIN' | 'ADMIN' | 'EMPLOYEE';
-export type MachineType = 'CNC' | 'LASER' | 'CHAMPS' | 'PANNEAUX' | 'SERVICE_MAINTENANCE' | 'VENTE_MATERIAU' | 'CUSTOM';
+export type MachineType = 'CNC' | 'LASER' | 'CHAMPS' | 'PANNEAUX' | 'SERVICE_MAINTENANCE' | 'VENTE_MATERIAU' | 'PLIAGE' | 'CUSTOM';
 export type DevisStatus = 'DRAFT' | 'VALIDATED' | 'INVOICED' | 'CANCELLED';
 
 export interface User {

@@ -9,6 +9,7 @@ import {
   Save,
   Wrench,
   Ruler,
+  FoldVertical,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { machinesApi } from '../services';
@@ -51,6 +52,12 @@ const MACHINE_INFO: Record<MachineType, { icon: typeof Cpu; label: string; unit:
     label: 'Vente Matériau',
     unit: 'TND/m²',
     description: 'Vente de matériaux au m²',
+  },
+  PLIAGE: {
+    icon: FoldVertical,
+    label: 'Pliage',
+    unit: 'TND/mètre',
+    description: 'Pliage - tarification au mètre',
   },
   CUSTOM: {
     icon: Layers,
@@ -220,6 +227,7 @@ export function MachinesPage() {
                     </span>
                     <span className="price-unit">{info.unit}</span>
                   </div>
+
                 </div>
                 <div className="machine-pricing-footer">
                   <span className="last-updated">
@@ -266,7 +274,15 @@ export function MachinesPage() {
                 <div className="formula-icon panneaux"><LayoutGrid size={20} /></div>
                 <div className="formula-content">
                   <h4>Panneaux</h4>
-                  <code>Total = quantité × prix/unité</code>
+                  <code>Total = quantité × prix</code>
+                </div>
+              </div>
+
+              <div className="formula-item">
+                <div className="formula-icon pliage"><FoldVertical size={20} /></div>
+                <div className="formula-content">
+                  <h4>Pliage</h4>
+                  <code>(m machine × prix) + (m mat. × prix mat.)</code>
                 </div>
               </div>
               <div className="formula-item">
@@ -281,6 +297,13 @@ export function MachinesPage() {
                 <div className="formula-content">
                   <h4>Vente Matériau</h4>
                   <code>Total = (Largeur × Hauteur) × prix matériau/m²</code>
+                </div>
+              </div>
+              <div className="formula-item">
+                <div className="formula-icon pliage"><FoldVertical size={20} /></div>
+                <div className="formula-content">
+                  <h4>Pliage</h4>
+                  <code>Total = (m machine + m matériau) × prix/m</code>
                 </div>
               </div>
             </div>

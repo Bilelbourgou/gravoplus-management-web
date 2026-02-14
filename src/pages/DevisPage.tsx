@@ -37,6 +37,7 @@ const MACHINE_LABELS: Record<MachineType, string> = {
   PANNEAUX: 'Panneaux',
   SERVICE_MAINTENANCE: 'Service Maintenance',
   VENTE_MATERIAU: 'Vente Matériau',
+  PLIAGE: 'Pliage',
   CUSTOM: 'Personnalisé',
 };
 
@@ -532,6 +533,55 @@ function DevisDetailModal({
                           step="0.1"
                         />
                       </div>
+                    )}
+                    {lineForm.machineType === 'PLIAGE' && (
+                      <>
+                        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                          <label className="form-label">Matériau utilisé</label>
+                          <select
+                            className="form-select"
+                            value={lineForm.materialId || ''}
+                            onChange={(e) =>
+                              setLineForm({ ...lineForm, materialId: e.target.value || undefined })
+                            }
+                          >
+                            <option value="">Aucun</option>
+                            {materials.filter((m) => m.isActive).map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {m.name} - {Number(m.pricePerUnit).toFixed(2)} TND/{m.unit}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Mètres machine</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={lineForm.meters || ''}
+                            onChange={(e) =>
+                              setLineForm({ ...lineForm, meters: parseFloat(e.target.value) || undefined })
+                            }
+                            placeholder="0"
+                            min="0"
+                            step="0.1"
+                          />
+                        </div>
+                        <div className="form-group">
+                          <label className="form-label">Mètres matériau</label>
+                          <input
+                            type="number"
+                            className="form-input"
+                            value={lineForm.quantity || ''}
+                            onChange={(e) =>
+                              setLineForm({ ...lineForm, quantity: parseFloat(e.target.value) || undefined })
+                            }
+                            placeholder="0"
+                            min="0"
+                            step="0.1"
+                          />
+                        </div>
+                      </>
                     )}
                     {lineForm.machineType === 'PANNEAUX' && (
                       <div className="form-group">
