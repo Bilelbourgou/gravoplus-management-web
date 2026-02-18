@@ -23,6 +23,7 @@ import type { Devis, Client, DevisStatus, MachineType, FixedService, Material, A
 import './DevisPage.css';
 import '../components/CreateInvoiceModal.css';
 import { exportToExcel } from '../utils/exportExcel';
+import { useAuthStore } from '../store/auth.store';
 
 const STATUS_LABELS: Record<DevisStatus, string> = {
   DRAFT: 'Brouillon',
@@ -158,6 +159,7 @@ interface DevisDetailModalProps {
   onRemoveService: (devisId: string, serviceId: string) => Promise<void>;
   onValidate: (devisId: string) => Promise<void>;
   onCancel: (devisId: string) => Promise<void>;
+  onUpdateStatus: (devisId: string, status: DevisStatus) => Promise<void>;
   onRefresh: () => void;
 }
 
@@ -178,9 +180,12 @@ function DevisDetailModal({
   onRemoveService,
   onValidate,
   onCancel,
+  onUpdateStatus,
   onRefresh,
 }: DevisDetailModalProps) {
-  const [activeTab, setActiveTab] = useState<'lines' | 'services'>('lines');
+  const { user } = useAuthStore();
+  const isSuperAdmin = user?.role === 'SUPERADMIN';
+  const [activeTab, setActiveTab ] = useState<'lines' | 'services'>('lines');
   const [showAddLine, setShowAddLine] = useState(false);
   const [loading, setLoading] = useState(false);
   const [customFields, setCustomFields] = useState<CustomField[]>([]);
@@ -317,6 +322,21 @@ function DevisDetailModal({
     }
   };
 
+  const handleStatusOverride = async (newStatus: DevisStatus) => {
+    if (newStatus === devis.status) return;
+    if (!confirm(`Voulez-vous vraiment changer le statut en ${STATUS_LABELS[newStatus]} ?`)) return;
+    
+    setLoading(true);
+    try {
+      await onUpdateStatus(devis.id, newStatus);
+      onRefresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const addedServiceIds = (devis.services || []).map((s) => s.serviceId);
   const isEditable = devis.status === 'DRAFT';
 
@@ -325,13 +345,25 @@ function DevisDetailModal({
       <div className="modal modal-xl" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div>
-            <h2 className="modal-title">{devis.reference}</h2>
             <p className="text-muted">{devis.client.name}</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className={`badge badge-${devis.status.toLowerCase()}`}>
-              {STATUS_LABELS[devis.status]}
-            </span>
+            {isSuperAdmin ? (
+              <select 
+                className={`badge badge-${devis.status.toLowerCase()} select-status-override`}
+                value={devis.status}
+                onChange={(e) => handleStatusOverride(e.target.value as DevisStatus)}
+                disabled={loading}
+              >
+                {Object.entries(STATUS_LABELS).map(([key, label]) => (
+                  <option key={key} value={key}>{label}</option>
+                ))}
+              </select>
+            ) : (
+              <span className={`badge badge-${devis.status.toLowerCase()}`}>
+                {STATUS_LABELS[devis.status]}
+              </span>
+            )}
             <button className="btn btn-ghost btn-icon" onClick={onClose}>
               <X size={20} />
             </button>
@@ -1080,6 +1112,10 @@ export function DevisPage() {
     await devisApi.cancel(devisId);
   };
 
+  const handleUpdateStatus = async (devisId: string, status: DevisStatus) => {
+    await devisApi.updateStatus(devisId, status);
+  };
+
   const handleDelete = async (devisId: string, reference: string) => {
     if (!confirm(`Êtes-vous sûr de vouloir supprimer le devis ${reference} ? Cette action est irréversible.`)) {
       return;
@@ -1316,6 +1352,7 @@ export function DevisPage() {
           onRemoveService={handleRemoveService}
           onValidate={handleValidate}
           onCancel={handleCancel}
+          onUpdateStatus={handleUpdateStatus}
           onRefresh={handleRefresh}
         />
       )}

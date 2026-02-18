@@ -143,6 +143,11 @@ export const devisApi = {
         return res.data.data!;
     },
 
+    updateStatus: async (id: string, status: string): Promise<Devis> => {
+        const res = await api.patch<ApiResponse<Devis>>(`/devis/${id}/status`, { status });
+        return res.data.data!;
+    },
+
     updateNotes: async (id: string, notes: string): Promise<Devis> => {
         const res = await api.put<ApiResponse<Devis>>(`/devis/${id}`, { notes });
         return res.data.data!;
