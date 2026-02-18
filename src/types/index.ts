@@ -283,21 +283,21 @@ export interface ClientBalanceData {
     devis: ClientBalanceDevis[];
 }
 
-export type ExpenseCategory =
-    | 'Matériel'
-    | 'Fournitures'
-    | 'Transport'
-    | 'Maintenance'
-    | 'Salaires'
-    | 'Loyer'
-    | 'Électricité'
-    | 'Autre';
+export interface ExpenseCategory {
+    id: string;
+    name: string;
+    color: string;
+    icon: string;
+    createdAt: string;
+    updatedAt: string;
+}
 
 export interface Expense {
     id: string;
     description: string;
     amount: number;
-    category: ExpenseCategory;
+    categoryName: string;
+    category?: ExpenseCategory;
     date: string;
     reference?: string;
     notes?: string;
@@ -310,7 +310,7 @@ export interface Expense {
 export interface CreateExpenseFormData {
     description: string;
     amount: number;
-    category: ExpenseCategory;
+    category: string; // This is the name of the category
     date?: string;
     reference?: string;
     notes?: string;

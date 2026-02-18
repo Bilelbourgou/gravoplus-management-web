@@ -17,6 +17,7 @@ import type {
     MachineType,
     ClientBalanceData,
     Expense,
+    ExpenseCategory,
     CreateExpenseFormData,
     ExpenseStats,
     Notification,
@@ -377,5 +378,32 @@ export const rapportApi = {
     cleanYear: async (year: number): Promise<any> => {
         const res = await api.post('/rapport/clean', null, { params: { year } });
         return res.data;
+    },
+};
+// ==================== Expense Categories ====================
+
+export const expenseCategoriesApi = {
+    getAll: async (): Promise<ExpenseCategory[]> => {
+        const res = await api.get<ApiResponse<ExpenseCategory[]>>('/expense-categories');
+        return res.data.data!;
+    },
+
+    getById: async (id: string): Promise<ExpenseCategory> => {
+        const res = await api.get<ApiResponse<ExpenseCategory>>(`/expense-categories/${id}`);
+        return res.data.data!;
+    },
+
+    create: async (data: { name: string; color?: string; icon?: string }): Promise<ExpenseCategory> => {
+        const res = await api.post<ApiResponse<ExpenseCategory>>('/expense-categories', data);
+        return res.data.data!;
+    },
+
+    update: async (id: string, data: { name?: string; color?: string; icon?: string }): Promise<ExpenseCategory> => {
+        const res = await api.put<ApiResponse<ExpenseCategory>>(`/expense-categories/${id}`, data);
+        return res.data.data!;
+    },
+
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`/expense-categories/${id}`);
     },
 };

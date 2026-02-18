@@ -1,68 +1,38 @@
 import { useState, useEffect } from 'react';
 import {
   Plus,
-  Edit2,
   Trash2,
-  X,
-  Wallet,
-  TrendingDown,
   Calendar,
   Filter,
   Receipt,
-  Package,
-  Truck,
-  Wrench,
-  Users,
-  Home,
-  Zap,
-  MoreHorizontal,
+  Edit2,
+  X,
+  Wallet,
+  TrendingDown
 } from 'lucide-react';
 import { Header } from '../components/layout';
-import { expensesApi } from '../services';
+import { ExpenseCategoryModal } from '../components/ExpenseCategoryModal';
+import { expensesApi, expenseCategoriesApi } from '../services';
 import type { Expense, CreateExpenseFormData, ExpenseCategory, ExpenseStats } from '../types';
 import './ExpensesPage.css';
 
-const EXPENSE_CATEGORIES: { value: ExpenseCategory; label: string; icon: React.ElementType; color: string }[] = [
-  { value: 'Matériel', label: 'Matériel', icon: Package, color: '#0066cc' },
-  { value: 'Fournitures', label: 'Fournitures', icon: Receipt, color: '#28a745' },
-  { value: 'Transport', label: 'Transport', icon: Truck, color: '#856404' },
-  { value: 'Maintenance', label: 'Maintenance', icon: Wrench, color: '#6f42c1' },
-  { value: 'Salaires', label: 'Salaires', icon: Users, color: '#17a2b8' },
-  { value: 'Loyer', label: 'Loyer', icon: Home, color: '#fd7e14' },
-  { value: 'Électricité', label: 'Électricité', icon: Zap, color: '#d39e00' },
-  { value: 'Autre', label: 'Autre', icon: MoreHorizontal, color: '#6c757d' },
-];
-
-const getCategoryClass = (category: string): string => {
-  const map: Record<string, string> = {
-    'Matériel': 'materiel',
-    'Fournitures': 'fournitures',
-    'Transport': 'transport',
-    'Maintenance': 'maintenance',
-    'Salaires': 'salaires',
-    'Loyer': 'loyer',
-    'Électricité': 'electricite',
-    'Autre': 'autre',
-  };
-  return map[category] || 'autre';
-};
-
-const getCategoryColor = (category: string): string => {
-  const found = EXPENSE_CATEGORIES.find(c => c.value === category);
+const getCategoryColor = (category: string, categories: ExpenseCategory[]): string => {
+  const found = categories.find(c => c.name === category);
   return found?.color || '#6c757d';
 };
 
 interface ExpenseModalProps {
   expense: Expense | null;
+  categories: ExpenseCategory[];
   onClose: () => void;
   onSave: (data: CreateExpenseFormData) => Promise<void>;
 }
 
-function ExpenseModal({ expense, onClose, onSave }: ExpenseModalProps) {
+function ExpenseModal({ expense, categories, onClose, onSave }: ExpenseModalProps) {
   const [formData, setFormData] = useState<CreateExpenseFormData>({
     description: expense?.description || '',
     amount: expense?.amount || 0,
-    category: expense?.category || 'Autre',
+    category: expense?.categoryName || 'Autre',
     date: expense?.date ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0],
     reference: expense?.reference || '',
     notes: expense?.notes || '',
@@ -138,11 +108,12 @@ function ExpenseModal({ expense, onClose, onSave }: ExpenseModalProps) {
                 <select
                   className="form-select"
                   value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value as ExpenseCategory })}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 >
-                  {EXPENSE_CATEGORIES.map((cat) => (
-                    <option key={cat.value} value={cat.value}>
-                      {cat.label}
+                  <option value="">Sélectionner une catégorie</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.name}>
+                      {cat.name}
                     </option>
                   ))}
                 </select>
@@ -253,8 +224,10 @@ export function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [stats, setStats] = useState<ExpenseStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<ExpenseCategory[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deletingExpense, setDeletingExpense] = useState<Expense | null>(null);
@@ -263,12 +236,14 @@ export function ExpensesPage() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [expensesData, statsData] = await Promise.all([
+      const [expensesData, statsData, categoriesData] = await Promise.all([
         expensesApi.getAll(categoryFilter ? { category: categoryFilter } : undefined),
         expensesApi.getStats(),
+        expenseCategoriesApi.getAll(),
       ]);
       setExpenses(expensesData);
       setStats(statsData);
+      setCategories(categoriesData);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur de chargement');
@@ -382,7 +357,7 @@ export function ExpensesPage() {
                         className="category-bar-fill"
                         style={{
                           width: `${(amount / maxCategoryAmount) * 100}%`,
-                          backgroundColor: getCategoryColor(category),
+                          backgroundColor: getCategoryColor(category, categories),
                         }}
                       />
                     </div>
@@ -404,23 +379,32 @@ export function ExpensesPage() {
               style={{ minWidth: '180px' }}
             >
               <option value="">Toutes les catégories</option>
-              {EXPENSE_CATEGORIES.map((cat) => (
-                <option key={cat.value} value={cat.value}>
-                  {cat.label}
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.name}>
+                  {cat.name}
                 </option>
               ))}
             </select>
           </div>
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              setEditingExpense(null);
-              setShowModal(true);
-            }}
-          >
-            <Plus size={18} />
-            Nouvelle dépense
-          </button>
+          <div className="expenses-actions-main">
+            <button
+              className="btn btn-secondary"
+              onClick={() => setShowCategoryModal(true)}
+            >
+              <Receipt size={18} />
+              Gérer les catégories
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setEditingExpense(null);
+                setShowModal(true);
+              }}
+            >
+              <Plus size={18} />
+              Nouvelle dépense
+            </button>
+          </div>
         </div>
 
         {/* Expenses Table */}
@@ -440,7 +424,6 @@ export function ExpensesPage() {
               </thead>
               <tbody>
                 {expenses.map((expense) => {
-                  const CategoryIcon = EXPENSE_CATEGORIES.find(c => c.value === expense.category)?.icon || MoreHorizontal;
                   return (
                     <tr key={expense.id}>
                       <td className="expense-date">
@@ -458,9 +441,13 @@ export function ExpensesPage() {
                         </div>
                       </td>
                       <td>
-                        <span className={`expense-category ${getCategoryClass(expense.category)}`}>
-                          <CategoryIcon size={14} />
-                          {expense.category}
+                        <span 
+                          className="expense-category-v2"
+                          style={{
+                            '--cat-color': getCategoryColor(expense.categoryName, categories)
+                          } as any}
+                        >
+                          {expense.categoryName}
                         </span>
                       </td>
                       <td className="expense-reference">
@@ -515,11 +502,19 @@ export function ExpensesPage() {
       {showModal && (
         <ExpenseModal
           expense={editingExpense}
+          categories={categories}
           onClose={() => {
             setShowModal(false);
             setEditingExpense(null);
           }}
           onSave={editingExpense ? handleUpdate : handleCreate}
+        />
+      )}
+
+      {showCategoryModal && (
+        <ExpenseCategoryModal
+          onClose={() => setShowCategoryModal(false)}
+          onCategoriesChange={fetchData}
         />
       )}
 
