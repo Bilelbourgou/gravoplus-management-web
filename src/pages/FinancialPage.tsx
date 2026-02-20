@@ -13,10 +13,13 @@ import {
   ChevronUp,
   DollarSign,
   Search,
+  Plus,
+  User,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { useAuthStore } from '../store/auth.store';
-import { invoicesApi } from '../services';
+import { invoicesApi, clientsApi, devisApi } from '../services';
+import type { Client, Devis } from '../types';
 import { financialService, type FinancialStats, type FinancialClosure, type CaisseDevis, type CreateCaissePaymentData } from '../services/financial.service';
 import './FinancialPage.css';
 
@@ -56,6 +59,14 @@ const FinancialPage: React.FC = () => {
   const [paymentModalDevis, setPaymentModalDevis] = useState<CaisseDevis | null>(null);
   const [paymentForm, setPaymentForm] = useState<CreateCaissePaymentData>({ amount: 0, paymentMethod: 'Espèces' });
   const [paymentLoading, setPaymentLoading] = useState(false);
+
+  // Direct recette modal state
+  const [showRecetteModal, setShowRecetteModal] = useState(false);
+  const [recetteForm, setRecetteForm] = useState<CreateCaissePaymentData>({ amount: 0, paymentMethod: 'Espèces' });
+  const [recetteLoading, setRecetteLoading] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [allDevis, setAllDevis] = useState<Devis[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
 
   const fetchData = async () => {
     try {
@@ -126,6 +137,53 @@ const FinancialPage: React.FC = () => {
       setPaymentLoading(false);
     }
   };
+
+  // Open the direct recette modal
+  const handleOpenRecetteModal = async () => {
+    setShowRecetteModal(true);
+    setRecetteForm({ amount: 0, paymentMethod: 'Espèces' });
+    setSelectedClientId('');
+    try {
+      const [clientList, devisList] = await Promise.all([
+        clientsApi.getAll(),
+        devisApi.getAll(),
+      ]);
+      setClients(clientList);
+      setAllDevis(devisList);
+    } catch (err) {
+      console.error('Failed to load clients/devis', err);
+    }
+  };
+
+  // Submit the direct recette
+  const handleSubmitRecette = async () => {
+    if (recetteForm.amount <= 0) return;
+    try {
+      setRecetteLoading(true);
+      const data: CreateCaissePaymentData = {
+        ...recetteForm,
+      };
+      if (selectedClientId && !recetteForm.devisId) {
+        const client = clients.find(c => c.id === selectedClientId);
+        data.description = data.description || `Recette - ${client?.name || ''}`;
+      }
+      await financialService.createCaissePayment(data);
+      setShowRecetteModal(false);
+      setRecetteForm({ amount: 0, paymentMethod: 'Espèces' });
+      setSelectedClientId('');
+      await fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.message || 'Erreur lors de l\'enregistrement de la recette');
+    } finally {
+      setRecetteLoading(false);
+    }
+  };
+
+  // Filtered devis based on selected client
+  const filteredDevisForRecette = useMemo(() => {
+    if (!selectedClientId) return [];
+    return allDevis.filter(d => d.clientId === selectedClientId && d.status !== 'CANCELLED');
+  }, [allDevis, selectedClientId]);
 
   const filteredDevis = useMemo(() => {
     let list = caisseDevis;
@@ -457,37 +515,48 @@ const FinancialPage: React.FC = () => {
 
           {/* ===== RECETTES TAB (Admin) ===== */}
           {activeTab === 1 && isAdmin && (
-            <div className="tab-content table-container">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Date</th>
-                    <th>Client / Description</th>
-                    <th>Réf. Devis</th>
-                    <th>Ref. Paiement</th>
-                    <th>Effectué par</th>
-                    <th>Mode</th>
-                    <th style={{ textAlign: 'right' }}>Montant (TND)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats?.payments && stats.payments.length > 0 ? (
-                    stats.payments.map((p) => (
-                      <tr key={p.id}>
-                        <td>{formatDate(p.paymentDate)}</td>
-                        <td>{p.devis?.client?.name || p.invoice?.client?.name || p.description || '-'}</td>
-                        <td>{p.devis?.reference || p.invoice?.reference || '-'}</td>
-                        <td>{p.reference || '-'}</td>
-                        <td>{p.createdBy?.firstName || '-'} {p.createdBy?.lastName || ''}</td>
-                        <td><span className="badge badge-info">{p.paymentMethod || 'Espèces'}</span></td>
-                        <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#22c55e' }}>+{Number(p.amount).toFixed(3)}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>Aucune recette pour cette session</td></tr>
-                  )}
-                </tbody>
-              </table>
+            <div className="tab-content">
+              {/* Header with add button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+                <h4 style={{ margin: 0, fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Recettes de la session
+                </h4>
+                <button className="btn btn-primary btn-sm" onClick={handleOpenRecetteModal}>
+                  <Plus size={16} style={{ marginRight: 6 }} /> Ajouter Recette
+                </button>
+              </div>
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Client / Description</th>
+                      <th>Réf. Devis</th>
+                      <th>Ref. Paiement</th>
+                      <th>Effectué par</th>
+                      <th>Mode</th>
+                      <th style={{ textAlign: 'right' }}>Montant (TND)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stats?.payments && stats.payments.length > 0 ? (
+                      stats.payments.map((p) => (
+                        <tr key={p.id}>
+                          <td>{formatDate(p.paymentDate)}</td>
+                          <td>{p.devis?.client?.name || p.invoice?.client?.name || p.description || '-'}</td>
+                          <td>{p.devis?.reference || p.invoice?.reference || '-'}</td>
+                          <td>{p.reference || '-'}</td>
+                          <td>{p.createdBy?.firstName || '-'} {p.createdBy?.lastName || ''}</td>
+                          <td><span className="badge badge-info">{p.paymentMethod || 'Espèces'}</span></td>
+                          <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#22c55e' }}>+{Number(p.amount).toFixed(3)}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>Aucune recette pour cette session</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
@@ -765,6 +834,143 @@ const FinancialPage: React.FC = () => {
           </div>
         );
       })()}
+
+      {/* Direct Recette Modal */}
+      {showRecetteModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: 520 }}>
+            <div className="modal-header">
+              <h2>Ajouter une Recette</h2>
+              <button className="close-btn" onClick={() => setShowRecetteModal(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              {/* Amount */}
+              <div className="form-group">
+                <label>Montant (TND) *</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  step="0.001"
+                  min="0"
+                  value={recetteForm.amount || ''}
+                  onChange={(e) => setRecetteForm({ ...recetteForm, amount: parseFloat(e.target.value) || 0 })}
+                  placeholder="0.000"
+                  autoFocus
+                />
+              </div>
+
+              {/* Description */}
+              <div className="form-group mt-4">
+                <label>Description *</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={recetteForm.description || ''}
+                  onChange={(e) => setRecetteForm({ ...recetteForm, description: e.target.value })}
+                  placeholder="Ex: Gravure plaque, Service découpe..."
+                />
+              </div>
+
+              {/* Payment method */}
+              <div className="form-group mt-4">
+                <label>Mode de paiement</label>
+                <select
+                  className="form-control"
+                  value={recetteForm.paymentMethod || 'Espèces'}
+                  onChange={(e) => setRecetteForm({ ...recetteForm, paymentMethod: e.target.value })}
+                >
+                  <option value="Espèces">Espèces</option>
+                  <option value="Chèque">Chèque</option>
+                  <option value="Virement">Virement</option>
+                  <option value="Carte">Carte</option>
+                </select>
+              </div>
+
+              {/* Reference */}
+              <div className="form-group mt-4">
+                <label>Référence</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={recetteForm.reference || ''}
+                  onChange={(e) => setRecetteForm({ ...recetteForm, reference: e.target.value })}
+                  placeholder="N° chèque, réf. virement..."
+                />
+              </div>
+
+              {/* Client selector (optional) */}
+              <div className="form-group mt-4">
+                <label>
+                  <User size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                  Client <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optionnel)</span>
+                </label>
+                <select
+                  className="form-control"
+                  value={selectedClientId}
+                  onChange={(e) => {
+                    setSelectedClientId(e.target.value);
+                    setRecetteForm({ ...recetteForm, devisId: undefined });
+                  }}
+                >
+                  <option value="">— Aucun client —</option>
+                  {clients.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}{c.phone ? ` (${c.phone})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Devis selector (optional, shown when client is selected) */}
+              {selectedClientId && (
+                <div className="form-group mt-4">
+                  <label>
+                    <FileText size={14} style={{ marginRight: 4, verticalAlign: 'middle' }} />
+                    Devis <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optionnel)</span>
+                  </label>
+                  <select
+                    className="form-control"
+                    value={recetteForm.devisId || ''}
+                    onChange={(e) => setRecetteForm({ ...recetteForm, devisId: e.target.value || undefined })}
+                  >
+                    <option value="">— Aucun devis lié —</option>
+                    {filteredDevisForRecette.map(d => (
+                      <option key={d.id} value={d.id}>
+                        {d.reference} — {Number(d.totalAmount).toFixed(3)} TND ({d.status === 'DRAFT' ? 'Brouillon' : d.status === 'VALIDATED' ? 'Validé' : d.status})
+                      </option>
+                    ))}
+                  </select>
+                  {filteredDevisForRecette.length === 0 && (
+                    <p style={{ color: 'var(--text-muted)', fontSize: 'var(--text-xs)', marginTop: 4 }}>Aucun devis pour ce client</p>
+                  )}
+                </div>
+              )}
+
+              {/* Notes */}
+              <div className="form-group mt-4">
+                <label>Notes</label>
+                <textarea
+                  className="form-control"
+                  rows={2}
+                  value={recetteForm.notes || ''}
+                  onChange={(e) => setRecetteForm({ ...recetteForm, notes: e.target.value })}
+                  placeholder="Notes..."
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setShowRecetteModal(false)} disabled={recetteLoading}>Annuler</button>
+              <button
+                className="btn btn-primary"
+                onClick={handleSubmitRecette}
+                disabled={recetteLoading || recetteForm.amount <= 0 || (!recetteForm.devisId && !recetteForm.description?.trim())}
+              >
+                {recetteLoading ? 'Enregistrement...' : 'Enregistrer la Recette'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
