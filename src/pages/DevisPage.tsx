@@ -644,7 +644,6 @@ function DevisDetailModal({
                               setLineForm({ ...lineForm, materialId: undefined, serviceId: undefined, unitPrice: undefined, quantity: undefined, width: undefined, height: undefined });
                             }}
                           >
-                            <option value="manual">Prix manuel</option>
                             <option value="material">Matériau utilisé</option>
                             <option value="service">Service fixe</option>
                           </select>
