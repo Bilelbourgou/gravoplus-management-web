@@ -85,6 +85,7 @@ export function DashboardPage() {
   const [newColumnName, setNewColumnName] = useState('');
 
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
+  const isSuperAdmin = user?.role === 'SUPERADMIN';
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -276,7 +277,8 @@ export function DashboardPage() {
           </div>
         </div>
 
-        {/* Financial Stats Cards */}
+        {/* Financial Stats Cards - Superadmin only */}
+        {isSuperAdmin && (
         <div className="stats-grid financial-stats">
           <div className="stat-card income">
             <div className="stat-icon green">
@@ -302,8 +304,10 @@ export function DashboardPage() {
             <div className="stat-label">Bénéfice net</div>
           </div>
         </div>
+        )}
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Superadmin only */}
+        {isSuperAdmin && (
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-icon blue">
@@ -337,6 +341,7 @@ export function DashboardPage() {
             <div className="stat-label">Factures</div>
           </div>
         </div>
+        )}
 
         {/* Unpaid Clients Warning */}
         {stats.unpaidClients && stats.unpaidClients.length > 0 && (
@@ -374,7 +379,8 @@ export function DashboardPage() {
           </div>
         )}
 
-        {/* Charts Row */}
+        {/* Charts Row - Superadmin only */}
+        {isSuperAdmin && (
         <div className="charts-row">
           {/* Revenue vs Expenses Chart */}
           <div className="card chart-card">
@@ -491,6 +497,7 @@ export function DashboardPage() {
             </div>
           </div>
         </div>
+        )}
 
         {/* Recent Devis */}
         <div className="card">
