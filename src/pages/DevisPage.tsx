@@ -813,10 +813,11 @@ function DevisDetailModal({
                             className="form-input"
                             value={lineForm.quantity || ''}
                             onChange={(e) =>
-                              setLineForm({ ...lineForm, quantity: parseInt(e.target.value) || undefined })
+                              setLineForm({ ...lineForm, quantity: parseFloat(e.target.value) || undefined })
                             }
                             placeholder="1"
-                            min="1"
+                            min="0.01"
+                            step="0.01"
                           />
                         </div>
                         <div className="form-group">
@@ -1287,6 +1288,26 @@ export function DevisPage() {
                             title="Voir les détails"
                           >
                             <Eye size={18} />
+                          </button>
+                          <button
+                            className="btn btn-ghost btn-icon"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                const blob = await devisApi.downloadPdf(devis.id);
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.href = url;
+                                a.download = `${devis.reference}.pdf`;
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                              } catch (err) {
+                                alert('Erreur lors du téléchargement du PDF');
+                              }
+                            }}
+                            title="Télécharger PDF"
+                          >
+                            <Download size={18} />
                           </button>
                           {devis.status !== 'INVOICED' && !devis.invoice && (
                             <button

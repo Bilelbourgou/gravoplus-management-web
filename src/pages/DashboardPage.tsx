@@ -655,9 +655,10 @@ export function DashboardPage() {
                             <input
                               type="number"
                               className="form-input"
-                              min="1"
+                              min="0.01"
+                              step="0.01"
                               value={item.quantity}
-                              onChange={(e) => updateCustomItem(item.id, 'quantity', parseInt(e.target.value) || 1)}
+                              onChange={(e) => updateCustomItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
                             />
                           </td>
                           <td>

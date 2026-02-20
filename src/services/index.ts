@@ -162,6 +162,13 @@ export const devisApi = {
         const res = await api.post<ApiResponse<Devis>>('/devis/custom', data);
         return res.data.data!;
     },
+
+    downloadPdf: async (id: string): Promise<Blob> => {
+        const res = await api.get(`/devis/${id}/pdf`, {
+            responseType: 'blob',
+        });
+        return res.data;
+    },
 };
 
 // ==================== Invoices ====================
