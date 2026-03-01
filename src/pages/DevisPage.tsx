@@ -18,8 +18,8 @@ import {
 import { Header } from '../components/layout';
 import { CreateInvoiceModal } from '../components/CreateInvoiceModal';
 import { DateRangeFilter } from '../components/common/DateRangeFilter';
-import { devisApi, clientsApi, servicesApi, materialsApi, invoicesApi } from '../services';
-import type { Devis, Client, DevisStatus, MachineType, FixedService, Material, AddDevisLineFormData } from '../types';
+import { devisApi, clientsApi, servicesApi, materialsApi, maintenanceMaterialsApi, invoicesApi } from '../services';
+import type { Devis, Client, DevisStatus, MachineType, FixedService, Material, MaintenanceMaterial, AddDevisLineFormData } from '../types';
 import './DevisPage.css';
 import '../components/CreateInvoiceModal.css';
 import { exportToExcel } from '../utils/exportExcel';
@@ -151,6 +151,7 @@ function CreateDevisModal({ clients, onClose, onSave, preSelectedClientId }: Cre
 interface DevisDetailModalProps {
   devis: Devis;
   materials: Material[];
+  maintenanceMaterials: MaintenanceMaterial[];
   services: FixedService[];
   onClose: () => void;
   onAddLine: (devisId: string, data: AddDevisLineFormData) => Promise<void>;
@@ -172,6 +173,7 @@ interface CustomField {
 function DevisDetailModal({
   devis,
   materials,
+  maintenanceMaterials,
   services,
   onClose,
   onAddLine,
@@ -641,7 +643,7 @@ function DevisDetailModal({
                             value={maintenanceType}
                             onChange={(e) => {
                               setMaintenanceType(e.target.value as 'material' | 'service' | 'manual');
-                              setLineForm({ ...lineForm, materialId: undefined, serviceId: undefined, unitPrice: undefined, quantity: undefined, width: undefined, height: undefined });
+                              setLineForm({ ...lineForm, materialId: undefined, maintenanceMaterialId: undefined, serviceId: undefined, unitPrice: undefined, quantity: undefined, width: undefined, height: undefined });
                             }}
                           >
                             <option value="material">Matériau utilisé</option>
@@ -669,16 +671,16 @@ function DevisDetailModal({
                         {maintenanceType === 'material' && (
                           <>
                             <div className="form-group">
-                              <label className="form-label">Matériau *</label>
+                              <label className="form-label">Matériau maintenance *</label>
                               <select
                                 className="form-select"
-                                value={lineForm.materialId || ''}
+                                value={lineForm.maintenanceMaterialId || ''}
                                 onChange={(e) =>
-                                  setLineForm({ ...lineForm, materialId: e.target.value || undefined })
+                                  setLineForm({ ...lineForm, maintenanceMaterialId: e.target.value || undefined })
                                 }
                               >
                                 <option value="">Sélectionner...</option>
-                                {materials.filter((m) => m.isActive).map((m) => (
+                                {maintenanceMaterials.filter((m) => m.isActive).map((m) => (
                                   <option key={m.id} value={m.id}>
                                     {m.name} - {Number(m.pricePerUnit).toFixed(2)} TND/{m.unit}
                                   </option>
@@ -993,6 +995,7 @@ export function DevisPage() {
   const [devisList, setDevisList] = useState<Devis[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [maintenanceMaterials, setMaintenanceMaterials] = useState<MaintenanceMaterial[]>([]);
   const [services, setServices] = useState<FixedService[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1008,7 +1011,7 @@ export function DevisPage() {
 
   const fetchData = async () => {
     try {
-      const [devisData, clientsData, materialsData, servicesData] = await Promise.all([
+      const [devisData, clientsData, materialsData, maintenanceMaterialsData, servicesData] = await Promise.all([
         devisApi.getAll({ 
           status: statusFilter === 'ALL' ? undefined : statusFilter, 
           dateFrom: dateFrom || undefined,
@@ -1016,11 +1019,13 @@ export function DevisPage() {
         }),
         clientsApi.getAll(),
         materialsApi.getAll(),
+        maintenanceMaterialsApi.getAll(),
         servicesApi.getAll(),
       ]);
       setDevisList(devisData);
       setClients(clientsData);
       setMaterials(materialsData);
+      setMaintenanceMaterials(maintenanceMaterialsData);
       setServices(servicesData);
       setError(null);
     } catch (err) {
@@ -1364,6 +1369,7 @@ export function DevisPage() {
         <DevisDetailModal
           devis={selectedDevis}
           materials={materials}
+          maintenanceMaterials={maintenanceMaterials}
           services={services}
           onClose={() => setSelectedDevis(null)}
           onAddLine={handleAddLine}

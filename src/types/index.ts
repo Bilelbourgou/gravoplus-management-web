@@ -52,6 +52,17 @@ export interface Material {
     updatedAt: string;
 }
 
+export interface MaintenanceMaterial {
+    id: string;
+    name: string;
+    pricePerUnit: number;
+    unit: string;
+    description?: string;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
 export interface FixedService {
     id: string;
     name: string;
@@ -97,6 +108,8 @@ export interface DevisLine {
     createdAt: string;
     materialId?: string;
     material?: Material;
+    maintenanceMaterialId?: string;
+    maintenanceMaterial?: MaintenanceMaterial;
 }
 
 export interface DevisServiceItem {
@@ -239,6 +252,7 @@ export interface AddDevisLineFormData {
     quantity?: number;
     unitPrice?: number;
     materialId?: string;
+    maintenanceMaterialId?: string;
     serviceId?: string;
     width?: number;
     height?: number;

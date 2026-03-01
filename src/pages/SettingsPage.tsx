@@ -6,10 +6,11 @@ import {
   X,
   Package,
   Wrench,
+  ShieldCheck,
 } from 'lucide-react';
 import { Header } from '../components/layout';
-import { materialsApi, servicesApi } from '../services';
-import type { Material, FixedService } from '../types';
+import { materialsApi, servicesApi, maintenanceMaterialsApi } from '../services';
+import type { Material, MaintenanceMaterial, FixedService } from '../types';
 import './SettingsPage.css';
 
 interface MaterialModalProps {
@@ -263,24 +264,164 @@ function ServiceModal({ service, onClose, onSave }: ServiceModalProps) {
   );
 }
 
+interface MaintenanceMaterialModalProps {
+  material: MaintenanceMaterial | null;
+  onClose: () => void;
+  onSave: (data: Omit<MaintenanceMaterial, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+}
+
+function MaintenanceMaterialModal({ material, onClose, onSave }: MaintenanceMaterialModalProps) {
+  const [formData, setFormData] = useState({
+    name: material?.name || '',
+    pricePerUnit: material?.pricePerUnit?.toString() || '',
+    unit: material?.unit || 'pièce',
+    description: material?.description || '',
+    isActive: material?.isActive ?? true,
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim() || !formData.pricePerUnit) {
+      setError('Nom et prix sont requis');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await onSave({
+        name: formData.name,
+        pricePerUnit: parseFloat(formData.pricePerUnit),
+        unit: formData.unit,
+        description: formData.description || undefined,
+        isActive: formData.isActive,
+      });
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">
+            {material ? 'Modifier le matériau maintenance' : 'Nouveau matériau maintenance'}
+          </h2>
+          <button className="btn btn-ghost btn-icon" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body">
+            {error && <div className="alert alert-error">{error}</div>}
+
+            <div className="form-group">
+              <label className="form-label">Nom *</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Nom du matériau"
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Prix par unité *</label>
+                <input
+                  type="number"
+                  className="form-input"
+                  value={formData.pricePerUnit}
+                  onChange={(e) => setFormData({ ...formData, pricePerUnit: e.target.value })}
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0"
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Unité</label>
+                <select
+                  className="form-select"
+                  value={formData.unit}
+                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                >
+                  <option value="pièce">pièce</option>
+                  <option value="m²">m² (mètre carré)</option>
+                  <option value="m">m (mètre)</option>
+                  <option value="kg">kg</option>
+                  <option value="L">L (litre)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Description</label>
+              <textarea
+                className="form-textarea"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Description optionnelle..."
+                rows={2}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="toggle-label">
+                <input
+                  type="checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                />
+                <span className="toggle-switch"></span>
+                <span>Actif</span>
+              </label>
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              Annuler
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? <span className="spinner" /> : null}
+              {material ? 'Mettre à jour' : 'Créer'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'materials' | 'services'>('materials');
+  const [activeTab, setActiveTab] = useState<'materials' | 'maintenanceMaterials' | 'services'>('materials');
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [maintenanceMaterials, setMaintenanceMaterials] = useState<MaintenanceMaterial[]>([]);
   const [services, setServices] = useState<FixedService[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMaterialModal, setShowMaterialModal] = useState(false);
+  const [showMaintenanceMaterialModal, setShowMaintenanceMaterialModal] = useState(false);
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
+  const [editingMaintenanceMaterial, setEditingMaintenanceMaterial] = useState<MaintenanceMaterial | null>(null);
   const [editingService, setEditingService] = useState<FixedService | null>(null);
 
   const fetchData = async () => {
     try {
-      const [materialsData, servicesData] = await Promise.all([
+      const [materialsData, maintenanceMaterialsData, servicesData] = await Promise.all([
         materialsApi.getAll(),
+        maintenanceMaterialsApi.getAll(),
         servicesApi.getAll(),
       ]);
       setMaterials(materialsData);
+      setMaintenanceMaterials(maintenanceMaterialsData);
       setServices(servicesData);
       setError(null);
     } catch (err) {
@@ -310,6 +451,24 @@ export function SettingsPage() {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce matériau ?')) return;
     await materialsApi.delete(id);
     setMaterials(materials.filter((m) => m.id !== id));
+  };
+
+  // Maintenance Material handlers
+  const handleCreateMaintenanceMaterial = async (data: Omit<MaintenanceMaterial, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newMaterial = await maintenanceMaterialsApi.create(data);
+    setMaintenanceMaterials([newMaterial, ...maintenanceMaterials]);
+  };
+
+  const handleUpdateMaintenanceMaterial = async (data: Omit<MaintenanceMaterial, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (!editingMaintenanceMaterial) return;
+    const updated = await maintenanceMaterialsApi.update(editingMaintenanceMaterial.id, data);
+    setMaintenanceMaterials(maintenanceMaterials.map((m) => (m.id === updated.id ? updated : m)));
+  };
+
+  const handleDeleteMaintenanceMaterial = async (id: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce matériau maintenance ?')) return;
+    await maintenanceMaterialsApi.delete(id);
+    setMaintenanceMaterials(maintenanceMaterials.filter((m) => m.id !== id));
   };
 
   // Service handlers
@@ -365,6 +524,14 @@ export function SettingsPage() {
             <Package size={20} />
             Matériaux
             <span className="tab-count">{materials.length}</span>
+          </button>
+          <button
+            className={`settings-tab ${activeTab === 'maintenanceMaterials' ? 'active' : ''}`}
+            onClick={() => setActiveTab('maintenanceMaterials')}
+          >
+            <ShieldCheck size={20} />
+            Mat. Maintenance
+            <span className="tab-count">{maintenanceMaterials.length}</span>
           </button>
           <button
             className={`settings-tab ${activeTab === 'services' ? 'active' : ''}`}
@@ -440,6 +607,75 @@ export function SettingsPage() {
                 <Package size={64} strokeWidth={1} />
                 <h3>Aucun matériau</h3>
                 <p>Ajoutez des matériaux pour les utiliser dans vos devis.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Maintenance Materials Tab */}
+        {activeTab === 'maintenanceMaterials' && (
+          <div className="settings-content">
+            <div className="settings-header">
+              <h3>Matériaux Maintenance</h3>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setEditingMaintenanceMaterial(null);
+                  setShowMaintenanceMaterialModal(true);
+                }}
+              >
+                <Plus size={18} />
+                Nouveau matériau maintenance
+              </button>
+            </div>
+
+            {maintenanceMaterials.length > 0 ? (
+              <div className="settings-grid">
+                {maintenanceMaterials.map((material) => (
+                  <div key={material.id} className={`settings-card ${!material.isActive ? 'inactive' : ''}`}>
+                    <div className="settings-card-header">
+                      <div className="settings-card-icon">
+                        <ShieldCheck size={20} />
+                      </div>
+                      <div className="settings-card-actions">
+                        <button
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => {
+                            setEditingMaintenanceMaterial(material);
+                            setShowMaintenanceMaterialModal(true);
+                          }}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => handleDeleteMaintenanceMaterial(material.id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="settings-card-body">
+                      <h4>{material.name}</h4>
+                      {material.description && (
+                        <p className="text-muted">{material.description}</p>
+                      )}
+                      <div className="settings-card-price">
+                        {Number(material.pricePerUnit).toFixed(2)} TND/{material.unit}
+                      </div>
+                    </div>
+                    <div className="settings-card-footer">
+                      <span className={`status-dot ${material.isActive ? 'active' : ''}`}></span>
+                      {material.isActive ? 'Actif' : 'Inactif'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <ShieldCheck size={64} strokeWidth={1} />
+                <h3>Aucun matériau maintenance</h3>
+                <p>Ajoutez des matériaux maintenance pour les utiliser dans vos devis de service maintenance.</p>
               </div>
             )}
           </div>
@@ -524,6 +760,17 @@ export function SettingsPage() {
             setEditingMaterial(null);
           }}
           onSave={editingMaterial ? handleUpdateMaterial : handleCreateMaterial}
+        />
+      )}
+
+      {showMaintenanceMaterialModal && (
+        <MaintenanceMaterialModal
+          material={editingMaintenanceMaterial}
+          onClose={() => {
+            setShowMaintenanceMaterialModal(false);
+            setEditingMaintenanceMaterial(null);
+          }}
+          onSave={editingMaintenanceMaterial ? handleUpdateMaintenanceMaterial : handleCreateMaintenanceMaterial}
         />
       )}
 
