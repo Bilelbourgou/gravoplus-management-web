@@ -22,7 +22,7 @@ import {
 import { Header } from '../components/layout';
 import { clientsApi, devisApi, invoicesApi, materialsApi, servicesApi } from '../services';
 import { financialService } from '../services/financial.service';
-import type { Client, CreateClientFormData, ClientBalanceData, ClientBalanceDevis, Devis, Material, FixedService, AddDevisLineFormData, MachineType, DevisStatus } from '../types';
+import type { Client, CreateClientFormData, ClientBalanceData, Devis, Material, FixedService, AddDevisLineFormData, MachineType, DevisStatus } from '../types';
 import './ClientsPage.css';
 import '../pages/DevisPage.css';
 import { exportToExcel } from '../utils/exportExcel';
@@ -190,7 +190,7 @@ function ClientBalanceModal({ client, onClose }: ClientBalanceModalProps) {
   const [services, setServices] = useState<FixedService[]>([]);
   const [editingDevis, setEditingDevis] = useState<Devis | null>(null);
   const [expandedDevisId, setExpandedDevisId] = useState<string | null>(null);
-  const [paymentDevis, setPaymentDevis] = useState<ClientBalanceDevis | null>(null);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentForm, setPaymentForm] = useState({ amount: 0, paymentMethod: 'Espèces', reference: '', notes: '' });
   const [paymentLoading, setPaymentLoading] = useState(false);
 
@@ -286,21 +286,20 @@ function ClientBalanceModal({ client, onClose }: ClientBalanceModalProps) {
   };
 
   const handleCreatePayment = async () => {
-    if (!paymentDevis || paymentForm.amount <= 0) return;
+    if (paymentForm.amount <= 0) return;
     setPaymentLoading(true);
     try {
-      await financialService.createCaissePayment({
+      await financialService.createClientPayment(client.id, {
         amount: paymentForm.amount,
-        devisId: paymentDevis.id,
         paymentMethod: paymentForm.paymentMethod,
         reference: paymentForm.reference || undefined,
         notes: paymentForm.notes || undefined,
       });
-      setPaymentDevis(null);
+      setShowPaymentForm(false);
       setPaymentForm({ amount: 0, paymentMethod: 'Espèces', reference: '', notes: '' });
       await fetchBalance();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Erreur lors de l\'enregistrement du paiement');
+      alert(err.response?.data?.error || err.response?.data?.message || 'Erreur lors de l\'enregistrement du paiement');
     } finally {
       setPaymentLoading(false);
     }
@@ -371,6 +370,15 @@ function ClientBalanceModal({ client, onClose }: ClientBalanceModalProps) {
                     {formatCurrency(balanceData.summary.outstandingBalance)}
                   </div>
                   <div style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: '2px' }}>{balanceData.summary.pendingPaymentCount} en attente</div>
+                  {balanceData.summary.outstandingBalance > 0 && (
+                    <button
+                      className="btn btn-primary btn-sm"
+                      style={{ marginTop: 'var(--space-3)' }}
+                      onClick={() => { setShowPaymentForm(true); setPaymentForm({ amount: 0, paymentMethod: 'Espèces', reference: '', notes: '' }); }}
+                    >
+                      <DollarSign size={14} /> Payer
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -412,11 +420,6 @@ function ClientBalanceModal({ client, onClose }: ClientBalanceModalProps) {
                               <td style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)' }}>{formatDate(d.createdAt)}</td>
                               <td onClick={(e) => e.stopPropagation()}>
                                 <div style={{ display: 'flex', gap: 4 }}>
-                                  {d.status === 'VALIDATED' && !d.isFullyPaid && (
-                                    <button className="btn btn-secondary btn-sm" onClick={() => { setPaymentDevis(d); setPaymentForm({ amount: 0, paymentMethod: 'Espèces', reference: '', notes: '' }); }} title="Paiement">
-                                      <DollarSign size={14} />
-                                    </button>
-                                  )}
                                   {d.status === 'VALIDATED' && d.isFullyPaid && !d.invoice && (
                                     <button className="btn btn-primary btn-sm" onClick={() => handleInvoiceDevis(d.id)} title="Facturer">
                                       <Receipt size={14} />
@@ -498,11 +501,6 @@ function ClientBalanceModal({ client, onClose }: ClientBalanceModalProps) {
                                           </>
                                         ) : <p className="no-data-msg">Aucun paiement enregistré</p>}
 
-                                        {d.status === 'VALIDATED' && !d.isFullyPaid && (
-                                          <button className="btn btn-secondary btn-sm" style={{ marginTop: 'var(--space-3)' }} onClick={() => { setPaymentDevis(d); setPaymentForm({ amount: 0, paymentMethod: 'Espèces', reference: '', notes: '' }); }}>
-                                            <DollarSign size={14} /> Ajouter un paiement
-                                          </button>
-                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -576,68 +574,51 @@ function ClientBalanceModal({ client, onClose }: ClientBalanceModalProps) {
       )}
 
       {/* Payment Modal */}
-      {paymentDevis && (() => {
-        const remaining = paymentDevis.remaining;
-        const amountExceeds = paymentForm.amount > remaining;
+      {showPaymentForm && balanceData && (() => {
+        const outstanding = balanceData.summary.outstandingBalance;
+        const amountExceeds = paymentForm.amount > outstanding;
 
         return (
-          <div className="modal-overlay" onClick={() => setPaymentDevis(null)} style={{ zIndex: 1001 }}>
+          <div className="modal-overlay" onClick={() => setShowPaymentForm(false)} style={{ zIndex: 1001 }}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
-                <h2>Paiement — {paymentDevis.reference}</h2>
-                <button className="close-btn" onClick={() => setPaymentDevis(null)}>×</button>
+                <h2>Paiement — {client.name}</h2>
+                <button className="close-btn" onClick={() => setShowPaymentForm(false)}>×</button>
               </div>
               <div className="modal-body">
                 <div className="closure-summary">
                   <div className="summary-row">
-                    <span>Montant total:</span>
-                    <span className="font-semibold">{paymentDevis.totalAmount.toFixed(3)} TND</span>
+                    <span>Total devis:</span>
+                    <span className="font-semibold">{balanceData.summary.totalDevisAmount.toFixed(3)} TND</span>
                   </div>
                   <div className="summary-row">
                     <span>Déjà payé:</span>
-                    <span className="amount green font-semibold">{paymentDevis.paidAmount.toFixed(3)} TND</span>
+                    <span className="amount green font-semibold">{balanceData.summary.totalPaid.toFixed(3)} TND</span>
                   </div>
                   <div className="summary-row total">
                     <span>Reste à payer:</span>
-                    <span className="amount red">{remaining.toFixed(3)} TND</span>
+                    <span className="amount red">{outstanding.toFixed(3)} TND</span>
                   </div>
                 </div>
 
-                {paymentDevis.payments.length > 0 && (
-                  <div style={{ marginTop: 'var(--space-4)' }}>
-                    <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-2)' }}>Historique des paiements</h4>
-                    <div className="devis-detail-section">
-                      <table className="detail-table">
-                        <thead><tr><th>Date</th><th>Mode</th><th>Par</th><th style={{ textAlign: 'right' }}>Montant</th></tr></thead>
-                        <tbody>
-                          {paymentDevis.payments.map(p => (
-                            <tr key={p.id}>
-                              <td>{formatDate(p.paymentDate)}</td>
-                              <td>{p.paymentMethod || 'Espèces'}</td>
-                              <td>{p.createdBy ? `${p.createdBy.firstName} ${p.createdBy.lastName}` : '-'}</td>
-                              <td style={{ textAlign: 'right' }} className="amount green font-semibold">+{p.amount.toFixed(3)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
+                <p style={{ fontSize: 'var(--text-xs)', color: 'var(--text-muted)', marginTop: 'var(--space-3)' }}>
+                  Le paiement sera réparti automatiquement sur les devis en attente.
+                </p>
 
                 <div className="form-group mt-4">
-                  <label>Montant * <span className="text-muted" style={{ fontWeight: 400 }}>(max: {remaining.toFixed(3)} TND)</span></label>
+                  <label>Montant * <span className="text-muted" style={{ fontWeight: 400 }}>(max: {outstanding.toFixed(3)} TND)</span></label>
                   <input
                     type="number"
                     className="form-control"
                     step="0.001"
                     min="0"
-                    max={remaining}
+                    max={outstanding}
                     value={paymentForm.amount || ''}
                     onChange={(e) => setPaymentForm({ ...paymentForm, amount: parseFloat(e.target.value) || 0 })}
                     placeholder="0.000"
                   />
                   {amountExceeds && (
-                    <p className="form-error" style={{ marginTop: 'var(--space-1)' }}>Le montant dépasse le reste à payer ({remaining.toFixed(3)} TND)</p>
+                    <p className="form-error" style={{ marginTop: 'var(--space-1)' }}>Le montant dépasse le reste à payer ({outstanding.toFixed(3)} TND)</p>
                   )}
                 </div>
 
@@ -662,7 +643,7 @@ function ClientBalanceModal({ client, onClose }: ClientBalanceModalProps) {
                 </div>
               </div>
               <div className="modal-footer">
-                <button className="btn btn-ghost" onClick={() => setPaymentDevis(null)} disabled={paymentLoading}>Annuler</button>
+                <button className="btn btn-ghost" onClick={() => setShowPaymentForm(false)} disabled={paymentLoading}>Annuler</button>
                 <button className="btn btn-primary" onClick={handleCreatePayment} disabled={paymentLoading || paymentForm.amount <= 0 || amountExceeds}>
                   {paymentLoading ? 'Enregistrement...' : 'Enregistrer'}
                 </button>

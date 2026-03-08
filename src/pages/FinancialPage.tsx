@@ -11,7 +11,6 @@ import {
   Receipt,
   ChevronDown,
   ChevronUp,
-  DollarSign,
   Search,
   Plus,
   User,
@@ -54,11 +53,6 @@ const FinancialPage: React.FC = () => {
   const [expandedDevisId, setExpandedDevisId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
-
-  // Payment modal state
-  const [paymentModalDevis, setPaymentModalDevis] = useState<CaisseDevis | null>(null);
-  const [paymentForm, setPaymentForm] = useState<CreateCaissePaymentData>({ amount: 0, paymentMethod: 'Espèces' });
-  const [paymentLoading, setPaymentLoading] = useState(false);
 
   // Direct recette modal state
   const [showRecetteModal, setShowRecetteModal] = useState(false);
@@ -116,25 +110,6 @@ const FinancialPage: React.FC = () => {
       await fetchData();
     } catch (err: any) {
       alert(err.message || 'Erreur lors de la facturation');
-    }
-  };
-
-  const handleCreatePayment = async () => {
-    if (!paymentModalDevis || paymentForm.amount <= 0) return;
-    try {
-      setPaymentLoading(true);
-      await financialService.createCaissePayment({
-        ...paymentForm,
-        devisId: paymentModalDevis.id,
-        description: `Paiement pour devis ${paymentModalDevis.reference} - ${paymentModalDevis.client?.name || ''}`,
-      });
-      setPaymentModalDevis(null);
-      setPaymentForm({ amount: 0, paymentMethod: 'Espèces' });
-      await fetchData();
-    } catch (err: any) {
-      alert(err.message || 'Erreur lors de l\'enregistrement du paiement');
-    } finally {
-      setPaymentLoading(false);
     }
   };
 
@@ -403,9 +378,6 @@ const FinancialPage: React.FC = () => {
                                       <Receipt size={14} /> Facturer
                                     </button>
                                   )}
-                                  <button className="btn btn-secondary btn-sm" onClick={() => { setPaymentModalDevis(d); setPaymentForm({ amount: 0, paymentMethod: 'Espèces', devisId: d.id }); }} title="Paiement">
-                                    <DollarSign size={14} /> Paiement
-                                  </button>
                                 </div>
                               </td>
                             )}
@@ -469,28 +441,6 @@ const FinancialPage: React.FC = () => {
                                         </div>
                                       )}
 
-                                      <h4>Paiements ({(d.payments || []).length})</h4>
-                                      {d.payments && d.payments.length > 0 ? (
-                                        <>
-                                          <table className="detail-table">
-                                            <thead><tr><th>Date</th><th>Mode</th><th>Par</th><th style={{textAlign:'right'}}>Montant</th></tr></thead>
-                                            <tbody>
-                                              {d.payments.map(p => (
-                                                <tr key={p.id}>
-                                                  <td>{formatDateShort(p.paymentDate)}</td>
-                                                  <td>{p.paymentMethod || 'Espèces'}</td>
-                                                  <td>{p.createdBy ? `${p.createdBy.firstName} ${p.createdBy.lastName}` : '-'}</td>
-                                                  <td style={{textAlign:'right'}} className="amount green font-semibold">+{Number(p.amount).toFixed(3)}</td>
-                                                </tr>
-                                              ))}
-                                            </tbody>
-                                          </table>
-                                          <div className="payment-total-row">
-                                            <span>Total payé: <span className="paid-amount">{totalPaid.toFixed(3)} TND</span></span>
-                                            <span className="total-amount">/ {Number(d.totalAmount).toFixed(3)} TND</span>
-                                          </div>
-                                        </>
-                                      ) : <p className="no-data-msg">Aucun paiement enregistré</p>}
                                     </div>
                                   </div>
                                 </div>
@@ -706,134 +656,6 @@ const FinancialPage: React.FC = () => {
           </div>
         </div>
       )}
-
-      {/* Payment Modal */}
-      {paymentModalDevis && (() => {
-        const modalTotalPaid = (paymentModalDevis.payments || []).reduce((s, p) => s + Number(p.amount), 0);
-        const modalTotal = Number(paymentModalDevis.totalAmount);
-        const modalRemaining = modalTotal - modalTotalPaid;
-        const isFullyPaid = modalRemaining <= 0;
-        const amountExceeds = paymentForm.amount > modalRemaining;
-
-        return (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h2>Enregistrer un Paiement</h2>
-                <button className="close-btn" onClick={() => setPaymentModalDevis(null)}>×</button>
-              </div>
-              <div className="modal-body">
-                {/* Summary */}
-                <div className="closure-summary">
-                  <div className="summary-row">
-                    <span>Devis:</span>
-                    <span className="font-semibold">{paymentModalDevis.reference}</span>
-                  </div>
-                  <div className="summary-row">
-                    <span>Client:</span>
-                    <span>{paymentModalDevis.client?.name || '-'}</span>
-                  </div>
-                  <div className="summary-row">
-                    <span>Montant total:</span>
-                    <span className="font-semibold">{modalTotal.toFixed(3)} TND</span>
-                  </div>
-                  <div className="summary-row">
-                    <span>Déjà payé:</span>
-                    <span className="amount green font-semibold">{modalTotalPaid.toFixed(3)} TND</span>
-                  </div>
-                  <div className="summary-row total">
-                    <span>Reste à payer:</span>
-                    <span className={modalRemaining > 0 ? 'amount red' : 'amount green'}>{modalRemaining.toFixed(3)} TND</span>
-                  </div>
-                </div>
-
-                {/* Existing payments list */}
-                {(paymentModalDevis.payments || []).length > 0 && (
-                  <div style={{ marginTop: 'var(--space-4)' }}>
-                    <h4 style={{ fontSize: 'var(--text-sm)', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: 'var(--space-2)' }}>Historique des paiements</h4>
-                    <div className="devis-detail-section">
-                      <table className="detail-table">
-                        <thead>
-                          <tr>
-                            <th>Date</th>
-                            <th>Mode</th>
-                            <th>Par</th>
-                            <th style={{ textAlign: 'right' }}>Montant</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {paymentModalDevis.payments!.map(p => (
-                            <tr key={p.id}>
-                              <td>{formatDateShort(p.paymentDate)}</td>
-                              <td>{p.paymentMethod || 'Espèces'}</td>
-                              <td>{p.createdBy ? `${p.createdBy.firstName} ${p.createdBy.lastName}` : '-'}</td>
-                              <td style={{ textAlign: 'right' }} className="amount green font-semibold">+{Number(p.amount).toFixed(3)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* New payment form */}
-                {isFullyPaid ? (
-                  <div className="closure-summary" style={{ marginTop: 'var(--space-4)', textAlign: 'center' }}>
-                    <p className="amount green font-semibold" style={{ fontSize: 'var(--text-base)' }}>Ce devis est entièrement payé</p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="form-group mt-4">
-                      <label>Montant * <span className="text-muted" style={{ fontWeight: 400 }}>(max: {modalRemaining.toFixed(3)} TND)</span></label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        step="0.001"
-                        min="0"
-                        max={modalRemaining}
-                        value={paymentForm.amount || ''}
-                        onChange={(e) => setPaymentForm({ ...paymentForm, amount: parseFloat(e.target.value) || 0 })}
-                        placeholder="0.000"
-                      />
-                      {amountExceeds && (
-                        <p className="form-error" style={{ marginTop: 'var(--space-1)' }}>Le montant dépasse le reste à payer ({modalRemaining.toFixed(3)} TND)</p>
-                      )}
-                    </div>
-
-                    <div className="form-group mt-4">
-                      <label>Mode de paiement</label>
-                      <select className="form-control" value={paymentForm.paymentMethod || ''} onChange={(e) => setPaymentForm({ ...paymentForm, paymentMethod: e.target.value })}>
-                        <option value="Espèces">Espèces</option>
-                        <option value="Chèque">Chèque</option>
-                        <option value="Virement">Virement</option>
-                        <option value="Carte">Carte</option>
-                      </select>
-                    </div>
-
-                    <div className="form-group mt-4">
-                      <label>Référence</label>
-                      <input type="text" className="form-control" value={paymentForm.reference || ''} onChange={(e) => setPaymentForm({ ...paymentForm, reference: e.target.value })} placeholder="N° chèque, réf. virement..." />
-                    </div>
-
-                    <div className="form-group mt-4">
-                      <label>Notes</label>
-                      <textarea className="form-control" rows={2} value={paymentForm.notes || ''} onChange={(e) => setPaymentForm({ ...paymentForm, notes: e.target.value })} placeholder="Notes..." />
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-ghost" onClick={() => setPaymentModalDevis(null)} disabled={paymentLoading}>Annuler</button>
-                {!isFullyPaid && (
-                  <button className="btn btn-primary" onClick={handleCreatePayment} disabled={paymentLoading || paymentForm.amount <= 0 || amountExceeds}>
-                    {paymentLoading ? 'Enregistrement...' : 'Enregistrer le Paiement'}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Direct Recette Modal */}
       {showRecetteModal && (

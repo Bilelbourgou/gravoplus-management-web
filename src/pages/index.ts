@@ -4,6 +4,7 @@ export { ClientsPage } from './ClientsPage';
 export { EmployeesPage } from './EmployeesPage';
 export { MachinesPage } from './MachinesPage';
 export { DevisPage } from './DevisPage';
+export { EncaissementsPage } from './EncaissementsPage';
 export { InvoicesPage } from './InvoicesPage';
 export { SettingsPage } from './SettingsPage';
 export { ExpensesPage } from './ExpensesPage';

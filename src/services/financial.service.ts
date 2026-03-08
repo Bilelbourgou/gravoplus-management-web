@@ -101,6 +101,11 @@ export const financialService = {
         return response.data.data!;
     },
 
+    createClientPayment: async (clientId: string, data: CreateCaissePaymentData) => {
+        const response = await api.post<ApiResponse<any>>(`/payments/client/${clientId}`, data);
+        return response.data.data!;
+    },
+
     getStats: async (): Promise<FinancialStats> => {
         const response = await api.get('/financial/stats');
         return response.data;

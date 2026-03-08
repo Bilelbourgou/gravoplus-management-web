@@ -24,7 +24,8 @@ const navItems = [
   { path: '/clients', icon: Users, label: 'Clients' },
   { path: '/employees', icon: UserCog, label: 'Employés' },
   { path: '/machines', icon: Cpu, label: 'Machines' },
-  { path: '/devis', icon: FileText, label: 'Devis' },
+  { path: '/devis', icon: FileText, label: 'Devis', superAdminOnly: true },
+  { path: '/encaissements', icon: Wallet, label: 'Encaissements', notSuperAdmin: true },
   { path: '/invoices', icon: Receipt, label: 'Factures' },
   { path: '/expenses', icon: Wallet, label: 'Dépenses', adminOnly: true },
   { path: '/financial', icon: Receipt, label: 'Caisse' },
@@ -110,6 +111,7 @@ export function Sidebar() {
           {navItems
   .filter((item) => {
     if ('superAdminOnly' in item && item.superAdminOnly) return user?.role === 'SUPERADMIN';
+    if ('notSuperAdmin' in item && (item as any).notSuperAdmin) return user?.role !== 'SUPERADMIN';
     if ('adminOnly' in item && item.adminOnly) return user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
     return true;
   })

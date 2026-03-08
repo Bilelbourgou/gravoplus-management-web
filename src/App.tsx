@@ -9,6 +9,7 @@ import {
   EmployeesPage, 
   MachinesPage, 
   DevisPage, 
+  EncaissementsPage,
   InvoicesPage, 
   SettingsPage,
   ExpensesPage,
@@ -66,6 +67,7 @@ function App() {
               <Route path="/employees" element={<EmployeesPage />} />
               <Route path="/machines" element={<MachinesPage />} />
               <Route path="/devis" element={<DevisPage />} />
+              <Route path="/encaissements" element={<EncaissementsPage />} />
               <Route path="/invoices" element={<InvoicesPage />} />
               <Route path="/expenses" element={<ExpensesPage />} />
               <Route path="/financial" element={<FinancialPage />} />

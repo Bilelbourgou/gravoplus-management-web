@@ -943,6 +943,31 @@ function DevisDetailModal({
             <span>Total</span>
             <span className="total-amount">{Number(devis.totalAmount).toFixed(2)} TND</span>
           </div>
+
+          {/* Acompte - SuperAdmin only, DRAFT only */}
+          {isSuperAdmin && devis.status === 'DRAFT' && (
+            <div className="form-group" style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap', fontWeight: 600 }}>Acompte (TND)</label>
+              <input
+                type="number"
+                className="form-input"
+                placeholder="0.000"
+                step="0.001"
+                min="0"
+                defaultValue={Number(devis.acompte) || ''}
+                onBlur={async (e) => {
+                  const val = parseFloat(e.target.value) || 0;
+                  if (val !== Number(devis.acompte)) {
+                    try {
+                      await devisApi.updateAcompte(devis.id, val);
+                      onRefresh();
+                    } catch (err) { console.error(err); }
+                  }
+                }}
+                style={{ maxWidth: '160px' }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="modal-footer">
@@ -1013,6 +1038,7 @@ export function DevisPage() {
     try {
       const [devisData, clientsData, materialsData, maintenanceMaterialsData, servicesData] = await Promise.all([
         devisApi.getAll({ 
+          type: 'DEVIS',
           status: statusFilter === 'ALL' ? undefined : statusFilter, 
           dateFrom: dateFrom || undefined,
           dateTo: dateTo || undefined

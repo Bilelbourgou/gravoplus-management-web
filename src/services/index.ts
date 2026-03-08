@@ -102,7 +102,7 @@ export const clientsApi = {
 // ==================== Devis ====================
 
 export const devisApi = {
-    getAll: async (filters?: { clientId?: string; status?: string; dateFrom?: string; dateTo?: string }): Promise<Devis[]> => {
+    getAll: async (filters?: { clientId?: string; status?: string; type?: string; dateFrom?: string; dateTo?: string }): Promise<Devis[]> => {
         const res = await api.get<ApiResponse<Devis[]>>('/devis', { params: filters });
         return res.data.data!;
     },
@@ -155,6 +155,11 @@ export const devisApi = {
         return res.data.data!;
     },
 
+    updateAcompte: async (id: string, acompte: number): Promise<Devis> => {
+        const res = await api.patch<ApiResponse<Devis>>(`/devis/${id}/acompte`, { acompte });
+        return res.data.data!;
+    },
+
     delete: async (id: string): Promise<void> => {
         await api.delete(`/devis/${id}`);
     },
@@ -169,6 +174,16 @@ export const devisApi = {
             responseType: 'blob',
         });
         return res.data;
+    },
+
+    createEncaissement: async (data: CreateDevisFormData): Promise<Devis> => {
+        const res = await api.post<ApiResponse<Devis>>('/devis/encaissement', data);
+        return res.data.data!;
+    },
+
+    finalizeEncaissement: async (id: string, paymentMethod?: string): Promise<Devis> => {
+        const res = await api.post<ApiResponse<Devis>>(`/devis/${id}/finalize`, { paymentMethod });
+        return res.data.data!;
     },
 };
 
