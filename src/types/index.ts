@@ -81,6 +81,9 @@ export interface Devis {
     status: DevisStatus;
     totalAmount: number;
     acompte?: number;
+    remise?: number;
+    remiseType?: 'FIXED' | 'PERCENTAGE';
+    timbreFiscal?: number;
     notes?: string;
     createdAt: string;
     updatedAt: string;

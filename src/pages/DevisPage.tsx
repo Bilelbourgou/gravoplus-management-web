@@ -944,28 +944,89 @@ function DevisDetailModal({
             <span className="total-amount">{Number(devis.totalAmount).toFixed(2)} TND</span>
           </div>
 
-          {/* Acompte - SuperAdmin only, DRAFT only */}
+          {/* Finance Section - SuperAdmin only, DRAFT only */}
           {isSuperAdmin && devis.status === 'DRAFT' && (
-            <div className="form-group" style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <label className="form-label" style={{ margin: 0, whiteSpace: 'nowrap', fontWeight: 600 }}>Acompte (TND)</label>
-              <input
-                type="number"
-                className="form-input"
-                placeholder="0.000"
-                step="0.001"
-                min="0"
-                defaultValue={Number(devis.acompte) || ''}
-                onBlur={async (e) => {
-                  const val = parseFloat(e.target.value) || 0;
-                  if (val !== Number(devis.acompte)) {
-                    try {
-                      await devisApi.updateAcompte(devis.id, val);
-                      onRefresh();
-                    } catch (err) { console.error(err); }
-                  }
-                }}
-                style={{ maxWidth: '160px' }}
-              />
+            <div className="finance-section" style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+              <h4 style={{ marginBottom: '1rem' }}>Paramètres financiers</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontWeight: 600 }}>Acompte (TND)</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    placeholder="0.000"
+                    step="0.001"
+                    min="0"
+                    defaultValue={Number(devis.acompte) || ''}
+                    onBlur={async (e) => {
+                      const val = parseFloat(e.target.value) || 0;
+                      if (val !== Number(devis.acompte)) {
+                        try {
+                          await devisApi.updateAcompte(devis.id, val);
+                          onRefresh();
+                        } catch (err) { console.error(err); }
+                      }
+                    }}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontWeight: 600 }}>Remise</label>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input
+                      type="number"
+                      className="form-input"
+                      placeholder="0.000"
+                      step="0.001"
+                      min="0"
+                      defaultValue={Number(devis.remise) || ''}
+                      onBlur={async (e) => {
+                        const val = parseFloat(e.target.value) || 0;
+                        if (val !== Number(devis.remise)) {
+                          try {
+                            await devisApi.updateRemise(devis.id, val, devis.remiseType || 'FIXED');
+                            onRefresh();
+                          } catch (err) { console.error(err); }
+                        }
+                      }}
+                    />
+                    <select 
+                      className="form-select" 
+                      style={{ width: '80px' }}
+                      value={devis.remiseType || 'FIXED'}
+                      onChange={async (e) => {
+                        const type = e.target.value as 'FIXED' | 'PERCENTAGE';
+                        try {
+                          await devisApi.updateRemise(devis.id, Number(devis.remise) || 0, type);
+                          onRefresh();
+                        } catch (err) { console.error(err); }
+                      }}
+                    >
+                      <option value="FIXED">TND</option>
+                      <option value="PERCENTAGE">%</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontWeight: 600 }}>Timbre Fiscal (TND)</label>
+                  <input
+                    type="number"
+                    className="form-input"
+                    placeholder="1.000"
+                    step="0.001"
+                    min="0"
+                    defaultValue={Number(devis.timbreFiscal) || 1.0}
+                    onBlur={async (e) => {
+                      const val = parseFloat(e.target.value) || 0;
+                      if (val !== Number(devis.timbreFiscal)) {
+                        try {
+                          await devisApi.updateTimbreFiscal(devis.id, val);
+                          onRefresh();
+                        } catch (err) { console.error(err); }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           )}
         </div>

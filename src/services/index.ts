@@ -160,6 +160,16 @@ export const devisApi = {
         return res.data.data!;
     },
 
+    updateRemise: async (id: string, remise: number, remiseType: 'FIXED' | 'PERCENTAGE'): Promise<Devis> => {
+        const res = await api.patch<ApiResponse<Devis>>(`/devis/${id}/remise`, { remise, remiseType });
+        return res.data.data!;
+    },
+
+    updateTimbreFiscal: async (id: string, amount: number): Promise<Devis> => {
+        const res = await api.patch<ApiResponse<Devis>>(`/devis/${id}/timbre-fiscal`, { amount });
+        return res.data.data!;
+    },
+
     delete: async (id: string): Promise<void> => {
         await api.delete(`/devis/${id}`);
     },
