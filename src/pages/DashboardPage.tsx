@@ -67,8 +67,18 @@ interface CustomColumn {
 }
 
 export function DashboardPage() {
-  const { user } = useAuthStore();
+  const { user, privacyMode } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  
+  const maskValue = (val: string | number) => {
+    if (!privacyMode) return typeof val === 'number' ? val.toFixed(2) : val;
+    return '••••';
+  };
+
+  const maskCount = (val: number) => {
+    if (!privacyMode) return val;
+    return '••';
+  };
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -256,7 +266,7 @@ export function DashboardPage() {
             <div className="stat-icon blue">
               <FileText size={24} />
             </div>
-            <div className="stat-value">{stats.todaysDevisTotal.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-value">{maskValue(stats.todaysDevisTotal)} <span className="currency">TND</span></div>
             <div className="stat-label">Devis aujourd'hui</div>
           </div>
 
@@ -264,7 +274,7 @@ export function DashboardPage() {
             <div className="stat-icon purple">
               <Receipt size={24} />
             </div>
-            <div className="stat-value">{stats.todaysInvoicesTotal.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-value">{maskValue(stats.todaysInvoicesTotal)} <span className="currency">TND</span></div>
             <div className="stat-label">Factures aujourd'hui</div>
           </div>
 
@@ -272,7 +282,7 @@ export function DashboardPage() {
             <div className="stat-icon green">
               <CreditCard size={24} />
             </div>
-            <div className="stat-value">{stats.todaysPaymentsTotal.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-value">{maskValue(stats.todaysPaymentsTotal)} <span className="currency">TND</span></div>
             <div className="stat-label">Paiements aujourd'hui</div>
           </div>
         </div>
@@ -284,7 +294,7 @@ export function DashboardPage() {
             <div className="stat-icon green">
               <TrendingUp size={24} />
             </div>
-            <div className="stat-value">{stats.totalRevenue.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-value">{maskValue(stats.totalRevenue)} <span className="currency">TND</span></div>
             <div className="stat-label">Revenus</div>
           </div>
 
@@ -292,7 +302,7 @@ export function DashboardPage() {
             <div className="stat-icon red">
               <TrendingDown size={24} />
             </div>
-            <div className="stat-value">{stats.totalExpenses.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-value">{maskValue(stats.totalExpenses)} <span className="currency">TND</span></div>
             <div className="stat-label">Dépenses</div>
           </div>
 
@@ -300,7 +310,7 @@ export function DashboardPage() {
             <div className={`stat-icon ${stats.netProfit >= 0 ? 'green' : 'red'}`}>
               <Wallet size={24} />
             </div>
-            <div className="stat-value">{stats.netProfit.toFixed(2)} <span className="currency">TND</span></div>
+            <div className="stat-value">{maskValue(stats.netProfit)} <span className="currency">TND</span></div>
             <div className="stat-label">Bénéfice net</div>
           </div>
         </div>
@@ -313,7 +323,7 @@ export function DashboardPage() {
             <div className="stat-icon blue">
               <Users size={24} />
             </div>
-            <div className="stat-value">{stats.totalClients}</div>
+            <div className="stat-value">{maskCount(stats.totalClients)}</div>
             <div className="stat-label">Clients</div>
           </div>
 
@@ -321,7 +331,7 @@ export function DashboardPage() {
             <div className="stat-icon purple">
               <UserCog size={24} />
             </div>
-            <div className="stat-value">{stats.totalEmployees}</div>
+            <div className="stat-value">{maskCount(stats.totalEmployees)}</div>
             <div className="stat-label">Employés</div>
           </div>
 
@@ -329,7 +339,7 @@ export function DashboardPage() {
             <div className="stat-icon orange">
               <FileText size={24} />
             </div>
-            <div className="stat-value">{stats.totalDevis}</div>
+            <div className="stat-value">{maskCount(stats.totalDevis)}</div>
             <div className="stat-label">Devis</div>
           </div>
 
@@ -337,7 +347,7 @@ export function DashboardPage() {
             <div className="stat-icon green">
               <Receipt size={24} />
             </div>
-            <div className="stat-value">{stats.totalInvoices}</div>
+            <div className="stat-value">{maskCount(stats.totalInvoices)}</div>
             <div className="stat-label">Factures</div>
           </div>
         </div>
@@ -387,7 +397,7 @@ export function DashboardPage() {
             <div className="card-header">
               <h3>Revenus vs Dépenses (6 derniers mois)</h3>
             </div>
-            <div className="card-body chart-container">
+            <div className={`card-body chart-container ${privacyMode ? 'blurred' : ''}`}>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={stats.monthlyRevenue.map((r, i) => ({
                   month: r.month,
@@ -449,7 +459,7 @@ export function DashboardPage() {
             <div className="card-header">
               <h3>Statut des devis</h3>
             </div>
-            <div className="card-body chart-container">
+            <div className={`card-body chart-container ${privacyMode ? 'blurred' : ''}`}>
               {pieData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>

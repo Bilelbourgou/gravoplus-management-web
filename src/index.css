@@ -614,6 +614,14 @@ p {
   to { transform: rotate(360deg); }
 }
 
+/* Privacy Mode Blur */
+.blurred {
+  filter: blur(8px);
+  pointer-events: none;
+  user-select: none;
+  transition: filter var(--transition-normal);
+}
+
 /* ============================================
    Utility Classes
    ============================================ */

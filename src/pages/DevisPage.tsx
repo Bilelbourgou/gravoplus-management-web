@@ -199,11 +199,12 @@ function DevisDetailModal({
     description: '',
     minutes: undefined,
     meters: undefined,
-    quantity: undefined,
     materialId: undefined,
     width: undefined,
     height: undefined,
     dimensionUnit: 'm',
+    quantity: 1,
+    materialMeters: undefined,
   });
 
   const addCustomField = () => {
@@ -413,6 +414,11 @@ function DevisDetailModal({
                                 {Number(line.width)} x {Number(line.height)} {line.dimensionUnit}
                             </span>
                         )}
+                        {line.quantity && line.quantity > 1 && (
+                          <span className="badge badge-secondary" style={{ marginLeft: '0.5rem', backgroundColor: 'var(--primary-light)', color: 'var(--primary-color)' }}>
+                            x{line.quantity} pcs
+                          </span>
+                        )}
                       </div>
                       <div className="devis-line-total">
                         {Number(line.lineTotal).toFixed(2)} TND
@@ -472,6 +478,19 @@ function DevisDetailModal({
                         value={lineForm.description || ''}
                         onChange={(e) => setLineForm({ ...lineForm, description: e.target.value })}
                         placeholder="Description..."
+                      />
+                    </div>
+                    <div className="form-group" style={{ maxWidth: '120px' }}>
+                      <label className="form-label">Nombre</label>
+                      <input
+                        type="number"
+                        className="form-input"
+                        value={lineForm.quantity || 1}
+                        onChange={(e) =>
+                          setLineForm({ ...lineForm, quantity: parseInt(e.target.value) || 1 })
+                        }
+                        placeholder="1"
+                        min="1"
                       />
                     </div>
                   </div>
@@ -544,11 +563,31 @@ function DevisDetailModal({
                           }
                         >
                           <option value="">Aucun</option>
-                          {materials.filter((m) => m.isActive).map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {m.name} - {Number(m.pricePerUnit).toFixed(2)} TND/{m.unit}
-                            </option>
-                          ))}
+                          {(() => {
+                            const filteredMaterials = materials.filter((m) => m.isActive);
+                            const grouped: Record<string, Material[]> = {};
+                            filteredMaterials.forEach(m => {
+                              const catName = m.category?.name || 'Autres';
+                              if (!grouped[catName]) grouped[catName] = [];
+                              grouped[catName].push(m);
+                            });
+                            
+                            const sortedCats = Object.keys(grouped).sort((a, b) => {
+                              if (a === 'Autres') return 1;
+                              if (b === 'Autres') return -1;
+                              return a.localeCompare(b);
+                            });
+
+                            return sortedCats.map(cat => (
+                              <optgroup key={cat} label={cat}>
+                                {grouped[cat].map(m => (
+                                  <option key={m.id} value={m.id}>
+                                    {m.name} - {Number(m.pricePerUnit).toFixed(2)} TND/{m.unit}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            ));
+                          })()}
                         </select>
                       </div>
                       </>
@@ -570,26 +609,9 @@ function DevisDetailModal({
                       </div>
                     )}
                     {lineForm.machineType === 'PLIAGE' && (
-                      <>
-                        <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                          <label className="form-label">Matériau utilisé</label>
-                          <select
-                            className="form-select"
-                            value={lineForm.materialId || ''}
-                            onChange={(e) =>
-                              setLineForm({ ...lineForm, materialId: e.target.value || undefined })
-                            }
-                          >
-                            <option value="">Aucun</option>
-                            {materials.filter((m) => m.isActive).map((m) => (
-                              <option key={m.id} value={m.id}>
-                                {m.name} - {Number(m.pricePerUnit).toFixed(2)} TND/{m.unit}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                      <div className="form-row">
                         <div className="form-group">
-                          <label className="form-label">Mètres machine</label>
+                          <label className="form-label">Mètres (Machine)</label>
                           <input
                             type="number"
                             className="form-input"
@@ -603,20 +625,20 @@ function DevisDetailModal({
                           />
                         </div>
                         <div className="form-group">
-                          <label className="form-label">Mètres matériau</label>
+                          <label className="form-label">Mètres (Matériau)</label>
                           <input
                             type="number"
                             className="form-input"
-                            value={lineForm.quantity || ''}
+                            value={lineForm.materialMeters || ''}
                             onChange={(e) =>
-                              setLineForm({ ...lineForm, quantity: parseFloat(e.target.value) || undefined })
+                              setLineForm({ ...lineForm, materialMeters: parseFloat(e.target.value) || undefined })
                             }
                             placeholder="0"
                             min="0"
                             step="0.1"
                           />
                         </div>
-                      </>
+                      </div>
                     )}
                     {lineForm.machineType === 'PANNEAUX' && (
                       <div className="form-group">
@@ -753,11 +775,31 @@ function DevisDetailModal({
                           }
                         >
                           <option value="">Sélectionner...</option>
-                          {materials.filter((m) => m.isActive).map((m) => (
-                            <option key={m.id} value={m.id}>
-                              {m.name} - {Number(m.pricePerUnit).toFixed(2)} TND/{m.unit}
-                            </option>
-                          ))}
+                          {(() => {
+                            const filteredMaterials = materials.filter((m) => m.isActive);
+                            const grouped: Record<string, Material[]> = {};
+                            filteredMaterials.forEach(m => {
+                              const catName = m.category?.name || 'Autres';
+                              if (!grouped[catName]) grouped[catName] = [];
+                              grouped[catName].push(m);
+                            });
+                            
+                            const sortedCats = Object.keys(grouped).sort((a, b) => {
+                              if (a === 'Autres') return 1;
+                              if (b === 'Autres') return -1;
+                              return a.localeCompare(b);
+                            });
+
+                            return sortedCats.map(cat => (
+                              <optgroup key={cat} label={cat}>
+                                {grouped[cat].map(m => (
+                                  <option key={m.id} value={m.id}>
+                                    {m.name} - {Number(m.pricePerUnit).toFixed(2)} TND/{m.unit}
+                                  </option>
+                                ))}
+                              </optgroup>
+                            ));
+                          })()}
                         </select>
                       </div>
                        <div className="form-row">

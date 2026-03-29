@@ -6,7 +6,9 @@ interface AuthState {
     user: User | null;
     token: string | null;
     isAuthenticated: boolean;
+    privacyMode: boolean;
     setAuth: (user: User, token: string) => void;
+    togglePrivacyMode: () => void;
     logout: () => void;
 }
 
@@ -16,12 +18,15 @@ export const useAuthStore = create<AuthState>()(
             user: null,
             token: null,
             isAuthenticated: false,
+            privacyMode: false,
             setAuth: (user: User, token: string) =>
                 set({
                     user,
                     token,
                     isAuthenticated: true,
                 }),
+            togglePrivacyMode: () =>
+                set((state) => ({ privacyMode: !state.privacyMode })),
             logout: () =>
                 set({
                     user: null,

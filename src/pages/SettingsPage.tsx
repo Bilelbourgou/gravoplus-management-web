@@ -9,23 +9,25 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { Header } from '../components/layout';
-import { materialsApi, servicesApi, maintenanceMaterialsApi } from '../services';
-import type { Material, MaintenanceMaterial, FixedService } from '../types';
+import { materialsApi, servicesApi, maintenanceMaterialsApi, materialCategoriesApi } from '../services';
+import type { Material, MaintenanceMaterial, FixedService, MaterialCategory } from '../types';
 import './SettingsPage.css';
 
 interface MaterialModalProps {
   material: Material | null;
+  categories: MaterialCategory[];
   onClose: () => void;
-  onSave: (data: Omit<Material, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  onSave: (data: Omit<Material, 'id' | 'createdAt' | 'updatedAt'> & { categoryId?: string }) => Promise<void>;
 }
 
-function MaterialModal({ material, onClose, onSave }: MaterialModalProps) {
+function MaterialModal({ material, categories, onClose, onSave }: MaterialModalProps) {
   const [formData, setFormData] = useState({
     name: material?.name || '',
     pricePerUnit: material?.pricePerUnit?.toString() || '',
     unit: material?.unit || 'm²',
     description: material?.description || '',
     isActive: material?.isActive ?? true,
+    categoryId: material?.categoryId || '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +48,7 @@ function MaterialModal({ material, onClose, onSave }: MaterialModalProps) {
         unit: formData.unit,
         description: formData.description || undefined,
         isActive: formData.isActive,
+        categoryId: formData.categoryId || undefined,
       });
       onClose();
     } catch (err) {
@@ -79,6 +82,22 @@ function MaterialModal({ material, onClose, onSave }: MaterialModalProps) {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Nom du matériau"
               />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Catégorie</label>
+              <select
+                className="form-select"
+                value={formData.categoryId}
+                onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
+              >
+                <option value="">Aucune</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="form-row">
@@ -399,28 +418,126 @@ function MaintenanceMaterialModal({ material, onClose, onSave }: MaintenanceMate
   );
 }
 
+function MaterialCategoryModal({ category, onClose, onSave }: {
+  category: MaterialCategory | null;
+  onClose: () => void;
+  onSave: (data: { name: string; color?: string; icon?: string }) => Promise<void>;
+}) {
+  const [formData, setFormData] = useState({
+    name: category?.name || '',
+    color: category?.color || '#3b82f6',
+    icon: category?.icon || 'Package',
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      setError('Le nom est requis');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+      await onSave(formData);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2 className="modal-title">
+            {category ? 'Modifier la catégorie' : 'Nouvelle catégorie'}
+          </h2>
+          <button className="btn btn-ghost btn-icon" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="modal-body">
+            {error && <div className="alert alert-error">{error}</div>}
+
+            <div className="form-group">
+              <label className="form-label">Nom *</label>
+              <input
+                type="text"
+                className="form-input"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Nom de la catégorie"
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label">Couleur</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="color"
+                    className="form-input-color"
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  />
+                  <input
+                    type="text"
+                    className="form-input flex-1"
+                    value={formData.color}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-footer">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>
+              Annuler
+            </button>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? <span className="spinner" /> : null}
+              {category ? 'Mettre à jour' : 'Créer'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export function SettingsPage() {
-  const [activeTab, setActiveTab] = useState<'materials' | 'maintenanceMaterials' | 'services'>('materials');
+  const [activeTab, setActiveTab] = useState<'materials' | 'maintenanceMaterials' | 'services' | 'materialCategories'>('materials');
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [categories, setCategories] = useState<MaterialCategory[]>([]);
   const [maintenanceMaterials, setMaintenanceMaterials] = useState<MaintenanceMaterial[]>([]);
   const [services, setServices] = useState<FixedService[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showMaterialModal, setShowMaterialModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showMaintenanceMaterialModal, setShowMaintenanceMaterialModal] = useState(false);
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
+  const [editingCategory, setEditingCategory] = useState<MaterialCategory | null>(null);
   const [editingMaintenanceMaterial, setEditingMaintenanceMaterial] = useState<MaintenanceMaterial | null>(null);
   const [editingService, setEditingService] = useState<FixedService | null>(null);
 
   const fetchData = async () => {
     try {
-      const [materialsData, maintenanceMaterialsData, servicesData] = await Promise.all([
+      const [materialsData, categoriesData, maintenanceMaterialsData, servicesData] = await Promise.all([
         materialsApi.getAll(),
+        materialCategoriesApi.getAll(),
         maintenanceMaterialsApi.getAll(),
         servicesApi.getAll(),
       ]);
       setMaterials(materialsData);
+      setCategories(categoriesData);
       setMaintenanceMaterials(maintenanceMaterialsData);
       setServices(servicesData);
       setError(null);
@@ -441,7 +558,7 @@ export function SettingsPage() {
     setMaterials([newMaterial, ...materials]);
   };
 
-  const handleUpdateMaterial = async (data: Omit<Material, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const handleUpdateMaterial = async (data: Omit<Material, 'id' | 'createdAt' | 'updatedAt'> & { categoryId?: string }) => {
     if (!editingMaterial) return;
     const updated = await materialsApi.update(editingMaterial.id, data);
     setMaterials(materials.map((m) => (m.id === updated.id ? updated : m)));
@@ -451,6 +568,28 @@ export function SettingsPage() {
     if (!confirm('Êtes-vous sûr de vouloir supprimer ce matériau ?')) return;
     await materialsApi.delete(id);
     setMaterials(materials.filter((m) => m.id !== id));
+  };
+
+  // Category handlers
+  const handleCreateCategory = async (data: { name: string; color?: string; icon?: string }) => {
+    const newCat = await materialCategoriesApi.create(data);
+    setCategories([newCat, ...categories]);
+  };
+
+  const handleUpdateCategory = async (data: { name?: string; color?: string; icon?: string }) => {
+    if (!editingCategory) return;
+    const updated = await materialCategoriesApi.update(editingCategory.id, data);
+    setCategories(categories.map((c) => (c.id === updated.id ? updated : c)));
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette catégorie ?')) return;
+    try {
+      await materialCategoriesApi.delete(id);
+      setCategories(categories.filter((c) => c.id !== id));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Erreur de suppression');
+    }
   };
 
   // Maintenance Material handlers
@@ -541,6 +680,14 @@ export function SettingsPage() {
             Services fixes
             <span className="tab-count">{services.length}</span>
           </button>
+          <button
+            className={`settings-tab ${activeTab === 'materialCategories' ? 'active' : ''}`}
+            onClick={() => setActiveTab('materialCategories')}
+          >
+            <ShieldCheck size={20} />
+            Catégories Mat.
+            <span className="tab-count">{categories.length}</span>
+          </button>
         </div>
 
         {/* Materials Tab */}
@@ -560,55 +707,89 @@ export function SettingsPage() {
               </button>
             </div>
 
-            {materials.length > 0 ? (
-              <div className="settings-grid">
-                {materials.map((material) => (
-                  <div key={material.id} className={`settings-card ${!material.isActive ? 'inactive' : ''}`}>
-                    <div className="settings-card-header">
-                      <div className="settings-card-icon">
-                        <Package size={20} />
-                      </div>
-                      <div className="settings-card-actions">
-                        <button
-                          className="btn btn-ghost btn-icon btn-sm"
-                          onClick={() => {
-                            setEditingMaterial(material);
-                            setShowMaterialModal(true);
-                          }}
-                        >
-                          <Edit2 size={16} />
-                        </button>
-                        <button
-                          className="btn btn-ghost btn-icon btn-sm"
-                          onClick={() => handleDeleteMaterial(material.id)}
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="settings-card-body">
-                      <h4>{material.name}</h4>
-                      {material.description && (
-                        <p className="text-muted">{material.description}</p>
-                      )}
-                      <div className="settings-card-price">
-                        {Number(material.pricePerUnit).toFixed(2)} TND/{material.unit}
-                      </div>
-                    </div>
-                    <div className="settings-card-footer">
-                      <span className={`status-dot ${material.isActive ? 'active' : ''}`}></span>
-                      {material.isActive ? 'Actif' : 'Inactif'}
-                    </div>
+            {(() => {
+              const grouped: Record<string, Material[]> = {};
+              materials.forEach(m => {
+                const catName = m.category?.name || 'Autres';
+                if (!grouped[catName]) grouped[catName] = [];
+                grouped[catName].push(m);
+              });
+
+              const sortedCats = Object.keys(grouped).sort((a, b) => {
+                if (a === 'Autres') return 1;
+                if (b === 'Autres') return -1;
+                return a.localeCompare(b);
+              });
+
+              if (materials.length === 0) {
+                return (
+                  <div className="empty-state">
+                    <Package size={64} strokeWidth={1} />
+                    <h3>Aucun matériau</h3>
+                    <p>Ajoutez des matériaux pour les utiliser dans vos devis.</p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="empty-state">
-                <Package size={64} strokeWidth={1} />
-                <h3>Aucun matériau</h3>
-                <p>Ajoutez des matériaux pour les utiliser dans vos devis.</p>
-              </div>
-            )}
+                );
+              }
+
+              return sortedCats.map(cat => (
+                <div key={cat} className="settings-category-group">
+                  <div className="settings-category-header">
+                    <h4>{cat}</h4>
+                    <div className="settings-category-line"></div>
+                  </div>
+                  <div className="settings-grid">
+                    {grouped[cat].map((material) => (
+                      <div key={material.id} className={`settings-card ${!material.isActive ? 'inactive' : ''}`}>
+                        <div className="settings-card-header">
+                          <div className="settings-card-icon">
+                            <Package size={20} />
+                          </div>
+                          <div className="settings-card-actions">
+                            <button
+                              className="btn btn-ghost btn-icon btn-sm"
+                              onClick={() => {
+                                setEditingMaterial(material);
+                                setShowMaterialModal(true);
+                              }}
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              className="btn btn-ghost btn-icon btn-sm"
+                              onClick={() => handleDeleteMaterial(material.id)}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="settings-card-body">
+                          <h4>{material.name}</h4>
+                          <div className="flex gap-2 items-center mb-1">
+                            {material.category ? (
+                              <span className="badge badge-secondary" style={{ backgroundColor: material.category.color + '20', color: material.category.color }}>
+                                {material.category.name}
+                              </span>
+                            ) : (
+                              <span className="badge badge-ghost text-xs">Sans catégorie</span>
+                            )}
+                          </div>
+                          {material.description && (
+                            <p className="text-muted">{material.description}</p>
+                          )}
+                          <div className="settings-card-price">
+                            {Number(material.pricePerUnit).toFixed(2)} TND/{material.unit}
+                          </div>
+                        </div>
+                        <div className="settings-card-footer">
+                          <span className={`status-dot ${material.isActive ? 'active' : ''}`}></span>
+                          {material.isActive ? 'Actif' : 'Inactif'}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ));
+            })()}
           </div>
         )}
 
@@ -749,17 +930,91 @@ export function SettingsPage() {
             )}
           </div>
         )}
+
+        {/* Categories Tab */}
+        {activeTab === 'materialCategories' && (
+          <div className="settings-content">
+            <div className="settings-header">
+              <h3>Catégories de Matériaux</h3>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  setEditingCategory(null);
+                  setShowCategoryModal(true);
+                }}
+              >
+                <Plus size={18} />
+                Nouvelle catégorie
+              </button>
+            </div>
+
+            {categories.length > 0 ? (
+              <div className="settings-grid">
+                {categories.map((cat) => (
+                  <div key={cat.id} className="settings-card">
+                    <div className="settings-card-header">
+                      <div className="settings-card-icon" style={{ backgroundColor: cat.color + '20', color: cat.color }}>
+                        <ShieldCheck size={20} />
+                      </div>
+                      <div className="settings-card-actions">
+                        <button
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => {
+                            setEditingCategory(cat);
+                            setShowCategoryModal(true);
+                          }}
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button
+                          className="btn btn-ghost btn-icon btn-sm"
+                          onClick={() => handleDeleteCategory(cat.id)}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="settings-card-body">
+                      <h4>{cat.name}</h4>
+                      <p className="text-muted">
+                        {cat._count?.materials || 0} matériaux associés
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="empty-state">
+                <ShieldCheck size={64} strokeWidth={1} />
+                <h3>Aucune catégorie</h3>
+                <p>Organisez vos matériaux en créant des catégories.</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Modals */}
       {showMaterialModal && (
         <MaterialModal
           material={editingMaterial}
+          categories={categories}
           onClose={() => {
             setShowMaterialModal(false);
             setEditingMaterial(null);
           }}
           onSave={editingMaterial ? handleUpdateMaterial : handleCreateMaterial}
+        />
+      )}
+
+      {showCategoryModal && (
+        <MaterialCategoryModal
+          category={editingCategory}
+          onClose={() => {
+            setShowCategoryModal(false);
+            setEditingCategory(null);
+          }}
+          onSave={editingCategory ? handleUpdateCategory : handleCreateCategory}
         />
       )}
 

@@ -14,6 +14,7 @@ import {
   Search,
   Plus,
   User,
+  Box,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { useAuthStore } from '../store/auth.store';
@@ -37,7 +38,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const FinancialPage: React.FC = () => {
-  const { user } = useAuthStore();
+  const { user, privacyMode } = useAuthStore();
   const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPERADMIN';
   const isSuperAdmin = user?.role === 'SUPERADMIN';
 
@@ -61,6 +62,11 @@ const FinancialPage: React.FC = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [allDevis, setAllDevis] = useState<Devis[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string>('');
+
+  const maskValue = (val: string | number) => {
+    if (!privacyMode) return Number(val).toFixed(3);
+    return '••••';
+  };
 
   const fetchData = async () => {
     try {
@@ -226,7 +232,7 @@ const FinancialPage: React.FC = () => {
             <div className="stat-icon green">
               <TrendingUp size={24} />
             </div>
-            <div className="stat-value">{devisSummary.total.toFixed(3)} <span className="currency">TND</span></div>
+            <div className="stat-value">{maskValue(devisSummary.total)} <span className="currency">TND</span></div>
             <div className="stat-label">Montant Total</div>
           </div>
           {isAdmin && stats && (
@@ -235,14 +241,14 @@ const FinancialPage: React.FC = () => {
                 <div className="stat-icon red">
                   <TrendingDown size={24} />
                 </div>
-                <div className="stat-value">{Number(stats.totalExpense || 0).toFixed(3)} <span className="currency">TND</span></div>
+                <div className="stat-value">{maskValue(stats.totalExpense || 0)} <span className="currency">TND</span></div>
                 <div className="stat-label">Dépenses (Session)</div>
               </div>
               <div className={`stat-card ${stats.balance >= 0 ? 'positive' : 'negative'}`}>
                 <div className={`stat-icon ${stats.balance >= 0 ? 'green' : 'red'}`}>
                   <Wallet size={24} />
                 </div>
-                <div className="stat-value">{Number(stats.balance || 0).toFixed(3)} <span className="currency">TND</span></div>
+                <div className="stat-value">{maskValue(stats.balance || 0)} <span className="currency">TND</span></div>
                 <div className="stat-label">Solde Caisse</div>
               </div>
             </>
@@ -290,9 +296,12 @@ const FinancialPage: React.FC = () => {
                   <Users size={16} style={{marginRight: 8}}/> Par Employé
                 </button>
                 <button className={`tab-btn ${activeTab === 3 ? 'active' : ''}`} onClick={() => setActiveTab(3)}>
-                  <TrendingDown size={16} style={{marginRight: 8}}/> Dépenses
+                  <Box size={16} style={{marginRight: 8}}/> Par Machine
                 </button>
                 <button className={`tab-btn ${activeTab === 4 ? 'active' : ''}`} onClick={() => setActiveTab(4)}>
+                  <TrendingDown size={16} style={{marginRight: 8}}/> Dépenses
+                </button>
+                <button className={`tab-btn ${activeTab === 5 ? 'active' : ''}`} onClick={() => setActiveTab(5)}>
                   <Clock size={16} style={{marginRight: 8}}/> Historique
                 </button>
               </>
@@ -516,9 +525,9 @@ const FinancialPage: React.FC = () => {
               <table className="table">
                 <thead>
                   <tr>
-                    <th>Employé</th>
-                    <th style={{ textAlign: 'center' }}>Nombre de Paiements</th>
-                    <th style={{ textAlign: 'right' }}>Montant Total (TND)</th>
+                    <th>Employé (Productivité)</th>
+                    <th style={{ textAlign: 'center' }}>Nombre de Devis</th>
+                    <th style={{ textAlign: 'right' }}>Montant Validé (TND)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -538,8 +547,36 @@ const FinancialPage: React.FC = () => {
             </div>
           )}
 
-          {/* ===== DÉPENSES TAB (Admin) ===== */}
+          {/* ===== PAR MACHINE TAB (Admin) ===== */}
           {activeTab === 3 && isAdmin && (
+            <div className="tab-content table-container">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Machine</th>
+                    <th style={{ textAlign: 'center' }}>Nombre d'Opérations</th>
+                    <th style={{ textAlign: 'right' }}>Montant Total (TND)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {stats?.productivityByMachine && stats.productivityByMachine.length > 0 ? (
+                    stats.productivityByMachine.map((item) => (
+                      <tr key={item.machine}>
+                        <td><span className="badge">{item.machine}</span></td>
+                        <td style={{ textAlign: 'center' }}>{item.count}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#22c55e' }}>{Number(item.totalAmount).toFixed(3)}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr><td colSpan={3} style={{ textAlign: 'center', padding: '2rem' }}>Aucune donnée par machine</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* ===== DÉPENSES TAB (Admin) ===== */}
+          {activeTab === 4 && isAdmin && (
             <div className="tab-content table-container">
               <table className="table">
                 <thead>
@@ -571,7 +608,7 @@ const FinancialPage: React.FC = () => {
           )}
 
           {/* ===== HISTORIQUE TAB (Admin) ===== */}
-          {activeTab === 4 && isAdmin && (
+          {activeTab === 5 && isAdmin && (
             <div className="tab-content table-container">
               <table className="table">
                 <thead>
@@ -630,8 +667,8 @@ const FinancialPage: React.FC = () => {
               <p>Vous êtes sur le point de clôturer la session de caisse.</p>
               <div className="closure-summary">
                 <div className="summary-row">
-                  <span>Recettes Totales:</span>
-                  <span className="amount green">{Number(stats?.totalIncome || 0).toFixed(3)} TND</span>
+                  <div className="stat-label">Ventes (Session)</div>
+                  <div className="stat-value">{stats?.totalIncome.toFixed(3)} TND</div>
                 </div>
                 <div className="summary-row">
                   <span>Dépenses Totales:</span>

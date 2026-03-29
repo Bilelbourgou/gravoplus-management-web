@@ -22,6 +22,7 @@ import type {
     CreateExpenseFormData,
     ExpenseStats,
     Notification,
+    MaterialCategory,
 } from '../types';
 
 // ==================== Auth ====================
@@ -264,7 +265,7 @@ export const materialsApi = {
         return res.data.data!;
     },
 
-    update: async (id: string, data: Partial<Material>): Promise<Material> => {
+    update: async (id: string, data: Partial<Material> & { categoryId?: string }): Promise<Material> => {
         const res = await api.put<ApiResponse<Material>>(`/materials/${id}`, data);
         return res.data.data!;
     },
@@ -461,5 +462,28 @@ export const expenseCategoriesApi = {
 
     delete: async (id: string): Promise<void> => {
         await api.delete(`/expense-categories/${id}`);
+    },
+};
+
+// ==================== Material Categories ====================
+
+export const materialCategoriesApi = {
+    getAll: async (): Promise<MaterialCategory[]> => {
+        const res = await api.get<ApiResponse<MaterialCategory[]>>('/material-categories');
+        return res.data.data!;
+    },
+
+    create: async (data: { name: string; color?: string; icon?: string }): Promise<MaterialCategory> => {
+        const res = await api.post<ApiResponse<MaterialCategory>>('/material-categories', data);
+        return res.data.data!;
+    },
+
+    update: async (id: string, data: { name?: string; color?: string; icon?: string }): Promise<MaterialCategory> => {
+        const res = await api.put<ApiResponse<MaterialCategory>>(`/material-categories/${id}`, data);
+        return res.data.data!;
+    },
+
+    delete: async (id: string): Promise<void> => {
+        await api.delete(`/material-categories/${id}`);
     },
 };

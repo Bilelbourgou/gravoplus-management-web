@@ -62,6 +62,11 @@ export interface FinancialStats {
         totalAmount: number;
         paymentCount: number;
     }>;
+    productivityByMachine: Array<{
+        machine: string;
+        totalAmount: number;
+        count: number;
+    }>;
 }
 
 export interface FinancialClosure {

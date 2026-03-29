@@ -51,6 +51,20 @@ export interface Material {
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
+    categoryId?: string;
+    category?: MaterialCategory;
+}
+
+export interface MaterialCategory {
+    id: string;
+    name: string;
+    color?: string;
+    icon?: string;
+    createdAt: string;
+    updatedAt: string;
+    _count?: {
+        materials: number;
+    };
 }
 
 export interface MaintenanceMaterial {
@@ -116,6 +130,7 @@ export interface DevisLine {
     material?: Material;
     maintenanceMaterialId?: string;
     maintenanceMaterial?: MaintenanceMaterial;
+    materialMeters?: number;
 }
 
 export interface DevisServiceItem {
@@ -263,6 +278,7 @@ export interface AddDevisLineFormData {
     width?: number;
     height?: number;
     dimensionUnit?: string;
+    materialMeters?: number;
 }
 
 export interface ClientBalancePayment {

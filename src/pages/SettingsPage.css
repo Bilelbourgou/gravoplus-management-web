@@ -66,6 +66,32 @@
   gap: var(--space-4);
 }
 
+.settings-category-group {
+  margin-bottom: var(--space-10);
+}
+
+.settings-category-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.settings-category-header h4 {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.settings-category-line {
+  height: 1px;
+  flex: 1;
+  background: var(--border-subtle);
+}
+
 .settings-card {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);

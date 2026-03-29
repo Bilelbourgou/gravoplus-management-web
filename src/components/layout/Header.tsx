@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, Search, Check, CheckCheck, Users, FileText, Receipt, Wallet, CreditCard } from 'lucide-react';
+import { Bell, Search, Check, CheckCheck, Users, FileText, Receipt, Wallet, CreditCard, Eye, EyeOff } from 'lucide-react';
 import { notificationsApi } from '../../services';
 import { connectSocket, onNotification, offNotification } from '../../services/socket';
 import { useAuthStore } from '../../store/auth.store';
@@ -36,7 +36,7 @@ const formatTimeAgo = (dateString: string) => {
 };
 
 export function Header({ title, subtitle }: HeaderProps) {
-  const { user, token } = useAuthStore();
+  const { user, token, privacyMode, togglePrivacyMode } = useAuthStore();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -132,6 +132,15 @@ export function Header({ title, subtitle }: HeaderProps) {
           <Search size={18} />
           <input type="text" placeholder="Rechercher..." />
         </div>
+
+        <button 
+          className="btn-icon btn-ghost" 
+          onClick={togglePrivacyMode}
+          title={privacyMode ? "Afficher les chiffres" : "Masquer les chiffres"}
+          style={{ marginRight: '8px' }}
+        >
+          {privacyMode ? <EyeOff size={20} /> : <Eye size={20} />}
+        </button>
 
         {isAdmin && (
           <div className="notification-container" ref={dropdownRef}>
