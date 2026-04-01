@@ -37,7 +37,7 @@
   gap: var(--space-5);
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 900px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -58,7 +58,7 @@
 /* Financial Stats */
  .daily-stats,
  .financial-stats {
-   grid-template-columns: repeat(3, 1fr);
+   grid-template-columns: repeat(4, 1fr);
  }
 
  .daily-stats {
@@ -105,9 +105,9 @@
   color: #8b5cf6;
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 900px) {
   .financial-stats {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

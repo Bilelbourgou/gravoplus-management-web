@@ -10,6 +10,8 @@ import {
   Clock,
   AlertTriangle,
   CreditCard,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { rapportApi, dashboardApi } from '../services';
@@ -34,6 +36,15 @@ export function RapportPage() {
   const [loading, setLoading] = useState(true);
   const [cleanModalOpen, setCleanModalOpen] = useState(false);
   const [cleaning, setCleaning] = useState(false);
+  const [collapsedSections, setCollapsedSections] = useState({
+    devis: false,
+    invoices: false,
+    expenses: false,
+  });
+
+  const toggleSection = (section: keyof typeof collapsedSections) => {
+    setCollapsedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
 
   const isSuperAdmin = user?.role === 'SUPERADMIN';
 
@@ -190,7 +201,7 @@ export function RapportPage() {
         {dashboardStats && (
           <div className="dashboard-stats-overview">
             <h3 className="section-title">Aperçu aujourd'hui</h3>
-            <div className="stats-grid daily-stats mb-6">
+            <div className="stats-grid extra-grid daily-stats mb-6">
               <div className="stat-card">
                 <div className="stat-icon blue">
                   <FileText size={24} />
@@ -219,7 +230,7 @@ export function RapportPage() {
             {isSuperAdmin && (
               <>
                 <h3 className="section-title">Performance Globale</h3>
-                <div className="stats-grid financial-stats mb-6">
+                <div className="stats-grid extra-grid financial-stats mb-6">
                   <div className="stat-card income">
                     <div className="stat-icon green">
                       <TrendingUp size={24} />
@@ -300,13 +311,18 @@ export function RapportPage() {
 
         {/* Devis Table */}
         <div className="rapport-section">
-          <div className="rapport-section-header">
-            <h3>Devis ({data?.devis?.length || 0})</h3>
-            <button className="btn btn-sm btn-secondary" onClick={handleExportDevis}>
+          <div className="rapport-section-header collapsible" onClick={() => toggleSection('devis')}>
+            <div className="header-title-group">
+              <h3>Devis ({data?.devis?.length || 0})</h3>
+              {collapsedSections.devis ? <ChevronDown size={20} className="text-muted" /> : <ChevronUp size={20} className="text-muted" />}
+            </div>
+            <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); handleExportDevis(); }}>
               <Download size={16} /> Excel
             </button>
           </div>
-          {data?.devis?.length > 0 ? (
+          {!collapsedSections.devis && (
+            <>
+              {data?.devis?.length > 0 ? (
             <div className="card">
               <div className="table-container">
                 <table className="table">
@@ -354,17 +370,24 @@ export function RapportPage() {
               <h3>Aucun devis pour {year}</h3>
             </div>
           )}
-        </div>
+        </>
+      )}
+    </div>
 
         {/* Invoices Table */}
         <div className="rapport-section">
-          <div className="rapport-section-header">
-            <h3>Factures ({data?.invoices?.length || 0})</h3>
-            <button className="btn btn-sm btn-secondary" onClick={handleExportInvoices}>
+          <div className="rapport-section-header collapsible" onClick={() => toggleSection('invoices')}>
+            <div className="header-title-group">
+              <h3>Factures ({data?.invoices?.length || 0})</h3>
+              {collapsedSections.invoices ? <ChevronDown size={20} className="text-muted" /> : <ChevronUp size={20} className="text-muted" />}
+            </div>
+            <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); handleExportInvoices(); }}>
               <Download size={16} /> Excel
             </button>
           </div>
-          {data?.invoices?.length > 0 ? (
+          {!collapsedSections.invoices && (
+            <>
+              {data?.invoices?.length > 0 ? (
             <div className="card">
               <div className="table-container">
                 <table className="table">
@@ -402,17 +425,24 @@ export function RapportPage() {
               <h3>Aucune facture pour {year}</h3>
             </div>
           )}
-        </div>
+        </>
+      )}
+    </div>
 
         {/* Expenses Table */}
         <div className="rapport-section">
-          <div className="rapport-section-header">
-            <h3>Dépenses ({data?.expenses?.length || 0})</h3>
-            <button className="btn btn-sm btn-secondary" onClick={handleExportExpenses}>
+          <div className="rapport-section-header collapsible" onClick={() => toggleSection('expenses')}>
+            <div className="header-title-group">
+              <h3>Dépenses ({data?.expenses?.length || 0})</h3>
+              {collapsedSections.expenses ? <ChevronDown size={20} className="text-muted" /> : <ChevronUp size={20} className="text-muted" />}
+            </div>
+            <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); handleExportExpenses(); }}>
               <Download size={16} /> Excel
             </button>
           </div>
-          {data?.expenses?.length > 0 ? (
+          {!collapsedSections.expenses && (
+            <>
+              {data?.expenses?.length > 0 ? (
             <div className="card">
               <div className="table-container">
                 <table className="table">
@@ -450,7 +480,9 @@ export function RapportPage() {
               <h3>Aucune dépense pour {year}</h3>
             </div>
           )}
-        </div>
+        </>
+      )}
+    </div>
 
         {/* Net Summary */}
         {stats && (

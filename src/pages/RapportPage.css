@@ -13,7 +13,7 @@
 }
 
 /* Stats Grid from Dashboard */
-.stats-grid {
+.stats-grid.extra-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--space-5);
@@ -145,6 +145,23 @@
   align-items: center;
   gap: 12px;
 }
+
+/* Collapsible Header Styling */
+.rapport-section-header.collapsible {
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+}
+
+.rapport-section-header.collapsible:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+.rapport-section-header .header-title-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 
 .year-selector {
   display: flex;
