@@ -1,15 +1,11 @@
 import { useEffect, useState } from 'react';
 import {
-  Users,
-  UserCog,
   FileText,
   Receipt,
-  TrendingUp,
-  TrendingDown,
-  Wallet,
+  Users,
+  UserCog,
   ArrowUpRight,
   Clock,
-  CreditCard,
   AlertTriangle,
   Plus,
   Trash2,
@@ -70,11 +66,6 @@ export function DashboardPage() {
   const { user, privacyMode } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   
-  const maskValue = (val: string | number) => {
-    if (!privacyMode) return typeof val === 'number' ? val.toFixed(2) : val;
-    return '••••';
-  };
-
   const maskCount = (val: number) => {
     if (!privacyMode) return val;
     return '••';
@@ -260,62 +251,6 @@ export function DashboardPage() {
       <Header title="Tableau de bord" subtitle="Vue d'ensemble de votre activité" />
       
       <div className="dashboard-content">
-        {/* Daily Stats */}
-        <div className="stats-grid daily-stats mb-6">
-          <div className="stat-card">
-            <div className="stat-icon blue">
-              <FileText size={24} />
-            </div>
-            <div className="stat-value">{maskValue(stats.todaysDevisTotal)} <span className="currency">TND</span></div>
-            <div className="stat-label">Devis aujourd'hui</div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon purple">
-              <Receipt size={24} />
-            </div>
-            <div className="stat-value">{maskValue(stats.todaysInvoicesTotal)} <span className="currency">TND</span></div>
-            <div className="stat-label">Factures aujourd'hui</div>
-          </div>
-
-          <div className="stat-card">
-            <div className="stat-icon green">
-              <CreditCard size={24} />
-            </div>
-            <div className="stat-value">{maskValue(stats.todaysPaymentsTotal)} <span className="currency">TND</span></div>
-            <div className="stat-label">Paiements aujourd'hui</div>
-          </div>
-        </div>
-
-        {/* Financial Stats Cards - Superadmin only */}
-        {isSuperAdmin && (
-        <div className="stats-grid financial-stats">
-          <div className="stat-card income">
-            <div className="stat-icon green">
-              <TrendingUp size={24} />
-            </div>
-            <div className="stat-value">{maskValue(stats.totalRevenue)} <span className="currency">TND</span></div>
-            <div className="stat-label">Revenus</div>
-          </div>
-
-          <div className="stat-card expenses">
-            <div className="stat-icon red">
-              <TrendingDown size={24} />
-            </div>
-            <div className="stat-value">{maskValue(stats.totalExpenses)} <span className="currency">TND</span></div>
-            <div className="stat-label">Dépenses</div>
-          </div>
-
-          <div className={`stat-card profit ${stats.netProfit >= 0 ? 'positive' : 'negative'}`}>
-            <div className={`stat-icon ${stats.netProfit >= 0 ? 'green' : 'red'}`}>
-              <Wallet size={24} />
-            </div>
-            <div className="stat-value">{maskValue(stats.netProfit)} <span className="currency">TND</span></div>
-            <div className="stat-label">Bénéfice net</div>
-          </div>
-        </div>
-        )}
-
         {/* Stats Cards - Superadmin only */}
         {isSuperAdmin && (
         <div className="stats-grid">

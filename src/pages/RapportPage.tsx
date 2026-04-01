@@ -9,10 +9,13 @@ import {
   TrendingDown,
   Clock,
   AlertTriangle,
+  CreditCard,
 } from 'lucide-react';
 import { Header } from '../components/layout';
-import { rapportApi } from '../services';
+import { rapportApi, dashboardApi } from '../services';
 import { exportToExcel } from '../utils/exportExcel';
+import { useAuthStore } from '../store/auth.store';
+import type { DashboardStats } from '../types';
 import './RapportPage.css';
 
 const STATUS_LABELS: Record<string, string> = {
@@ -23,12 +26,21 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function RapportPage() {
+  const { user, privacyMode } = useAuthStore();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
   const [data, setData] = useState<any>(null);
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [cleanModalOpen, setCleanModalOpen] = useState(false);
   const [cleaning, setCleaning] = useState(false);
+
+  const isSuperAdmin = user?.role === 'SUPERADMIN';
+
+  const maskValue = (val: string | number) => {
+    if (!privacyMode) return typeof val === 'number' ? val.toFixed(2) : val;
+    return '••••';
+  };
 
   const years = Array.from({ length: 10 }, (_, i) => currentYear - i);
 
@@ -47,6 +59,18 @@ export function RapportPage() {
   useEffect(() => {
     fetchData();
   }, [year]);
+
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const stats = await dashboardApi.getStats();
+        setDashboardStats(stats);
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+      }
+    };
+    fetchDashboardStats();
+  }, []);
 
   const handleExportDevis = () => {
     if (!data?.devis) return;
@@ -162,6 +186,70 @@ export function RapportPage() {
           </div>
         </div>
 
+        {/* Dashboard Stats (Today & Totals) - Premium Cards */}
+        {dashboardStats && (
+          <div className="dashboard-stats-overview">
+            <h3 className="section-title">Aperçu aujourd'hui</h3>
+            <div className="stats-grid daily-stats mb-6">
+              <div className="stat-card">
+                <div className="stat-icon blue">
+                  <FileText size={24} />
+                </div>
+                <div className="stat-value">{maskValue(dashboardStats.todaysDevisTotal)} <span className="currency">TND</span></div>
+                <div className="stat-label">Devis aujourd'hui</div>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-icon purple">
+                  <Receipt size={24} />
+                </div>
+                <div className="stat-value">{maskValue(dashboardStats.todaysInvoicesTotal)} <span className="currency">TND</span></div>
+                <div className="stat-label">Factures aujourd'hui</div>
+              </div>
+
+              <div className="stat-card">
+                <div className="stat-icon green">
+                  <CreditCard size={24} />
+                </div>
+                <div className="stat-value">{maskValue(dashboardStats.todaysPaymentsTotal)} <span className="currency">TND</span></div>
+                <div className="stat-label">Paiements aujourd'hui</div>
+              </div>
+            </div>
+
+            {isSuperAdmin && (
+              <>
+                <h3 className="section-title">Performance Globale</h3>
+                <div className="stats-grid financial-stats mb-6">
+                  <div className="stat-card income">
+                    <div className="stat-icon green">
+                      <TrendingUp size={24} />
+                    </div>
+                    <div className="stat-value">{maskValue(dashboardStats.totalRevenue)} <span className="currency">TND</span></div>
+                    <div className="stat-label">Revenus</div>
+                  </div>
+
+                  <div className="stat-card expenses">
+                    <div className="stat-icon red">
+                      <TrendingDown size={24} />
+                    </div>
+                    <div className="stat-value">{maskValue(dashboardStats.totalExpenses)} <span className="currency">TND</span></div>
+                    <div className="stat-label">Dépenses</div>
+                  </div>
+
+                  <div className={`stat-card profit ${dashboardStats.netProfit >= 0 ? 'positive' : 'negative'}`}>
+                    <div className={`stat-icon ${dashboardStats.netProfit >= 0 ? 'green' : 'red'}`}>
+                      <Wallet size={24} />
+                    </div>
+                    <div className="stat-value">{maskValue(dashboardStats.netProfit)} <span className="currency">TND</span></div>
+                    <div className="stat-label">Bénéfice net</div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        <h3 className="section-title">Statistiques Annuelles ({year})</h3>
         {/* Stats Cards */}
         {stats && (
           <div className="rapport-stats">
