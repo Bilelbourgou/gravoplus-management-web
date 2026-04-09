@@ -35,12 +35,16 @@ export interface FinancialStats {
         reference: string;
         description?: string;
         invoice?: {
+            id: string;
             reference: string;
-            client: { name: string };
+            clientId?: string;
+            client?: { name: string };
         };
         devis?: {
+            id: string;
             reference: string;
-            client: { name: string };
+            clientId?: string;
+            client?: { name: string };
         };
         createdBy?: {
             firstName: string;

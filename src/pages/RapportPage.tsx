@@ -12,6 +12,8 @@ import {
   CreditCard,
   ChevronUp,
   ChevronDown,
+  Users,
+  Box,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { rapportApi, dashboardApi } from '../services';
@@ -31,6 +33,8 @@ export function RapportPage() {
   const { user, privacyMode } = useAuthStore();
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
+  const [month, setMonth] = useState<number | ''>('');
+  const [day, setDay] = useState<number | ''>('');
   const [data, setData] = useState<any>(null);
   const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +44,7 @@ export function RapportPage() {
     devis: false,
     invoices: false,
     expenses: false,
+    productivity: false,
   });
 
   const toggleSection = (section: keyof typeof collapsedSections) => {
@@ -58,7 +63,7 @@ export function RapportPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const result = await rapportApi.getYearly(year);
+      const result = await rapportApi.getYearly(year, month === '' ? undefined : month, day === '' ? undefined : day);
       setData(result);
     } catch (err) {
       console.error('Error fetching rapport:', err);
@@ -69,7 +74,15 @@ export function RapportPage() {
 
   useEffect(() => {
     fetchData();
-  }, [year]);
+  }, [year, month, day]);
+
+  const monthNames = [
+    'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+    'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+  ];
+
+  const daysInMonth = month !== '' ? new Date(year, Number(month), 0).getDate() : 31;
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
@@ -127,7 +140,33 @@ export function RapportPage() {
         { header: 'Créé par', accessor: (e: any) => `${e.createdBy?.firstName || ''} ${e.createdBy?.lastName || ''}`.trim() },
         { header: 'Date', accessor: (e: any) => new Date(e.date).toLocaleDateString('fr-FR') },
       ],
-      `rapport_depenses_${year}`
+      `rapport_depenses_${year}_${month || 'all'}_${day || 'all'}`
+    );
+  };
+
+  const handleExportProductivity = () => {
+    if (!data?.revenueByEmployee) return;
+    exportToExcel(
+      data.revenueByEmployee,
+      [
+        { header: 'Employé', accessor: (item: any) => item.employeeName },
+        { header: 'Nombre de Devis', accessor: (item: any) => item.paymentCount },
+        { header: 'Montant (TND)', accessor: (item: any) => Number(item.totalAmount).toFixed(3) },
+      ],
+      `rapport_productivitee_employes_${year}_${month || 'all'}`
+    );
+  };
+
+  const handleExportMachineProductivity = () => {
+    if (!data?.productivityByMachine) return;
+    exportToExcel(
+      data.productivityByMachine,
+      [
+        { header: 'Machine', accessor: (item: any) => item.machine },
+        { header: 'Opérations', accessor: (item: any) => item.count },
+        { header: 'Montant (TND)', accessor: (item: any) => Number(item.totalAmount).toFixed(3) },
+      ],
+      `rapport_productivitee_machines_${year}_${month || 'all'}`
     );
   };
 
@@ -135,6 +174,8 @@ export function RapportPage() {
     handleExportDevis();
     handleExportInvoices();
     handleExportExpenses();
+    handleExportProductivity();
+    handleExportMachineProductivity();
   };
 
   const handleClean = async () => {
@@ -174,13 +215,33 @@ export function RapportPage() {
       <div className="page-content">
         {/* Year Selector + Actions */}
         <div className="actions-bar">
-          <div className="year-selector">
-            <label>Année :</label>
-            <select value={year} onChange={(e) => setYear(Number(e.target.value))}>
-              {years.map((y) => (
-                <option key={y} value={y}>{y}</option>
-              ))}
-            </select>
+          <div className="year-selector" style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="filter-group">
+              <label>Année :</label>
+              <select value={year} onChange={(e) => setYear(Number(e.target.value))}>
+                {years.map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Mois :</label>
+              <select value={month} onChange={(e) => { setMonth(e.target.value === '' ? '' : Number(e.target.value)); setDay(''); }}>
+                <option value="">Tous les mois</option>
+                {monthNames.map((name, i) => (
+                  <option key={i} value={i + 1}>{name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Jour :</label>
+              <select value={day} onChange={(e) => setDay(e.target.value === '' ? '' : Number(e.target.value))} disabled={month === ''}>
+                <option value="">Tous les jours</option>
+                {days.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="rapport-header-actions">
             <button className="btn btn-secondary" onClick={handleExportAll}>
@@ -260,7 +321,9 @@ export function RapportPage() {
           </div>
         )}
 
-        <h3 className="section-title">Statistiques Annuelles ({year})</h3>
+        <h3 className="section-title">
+          Statistiques {day ? `du ${day}/${month}/${year}` : month ? `de ${monthNames[Number(month)-1]} ${year}` : `Annuelles (${year})`}
+        </h3>
         {/* Stats Cards */}
         {stats && (
           <div className="rapport-stats">
@@ -483,6 +546,89 @@ export function RapportPage() {
         </>
       )}
     </div>
+
+        {/* Productivity Section */}
+        <div className="rapport-section">
+          <div className="rapport-section-header collapsible" onClick={() => toggleSection('productivity')}>
+            <div className="header-title-group">
+              <h3>Suivi de Productivité</h3>
+              {collapsedSections.productivity ? <ChevronDown size={20} className="text-muted" /> : <ChevronUp size={20} className="text-muted" />}
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); handleExportProductivity(); }}>
+                <Users size={16} /> Employés
+              </button>
+              <button className="btn btn-sm btn-secondary" onClick={(e) => { e.stopPropagation(); handleExportMachineProductivity(); }}>
+                <Box size={16} /> Machines
+              </button>
+            </div>
+          </div>
+          {!collapsedSections.productivity && (
+            <div className="productivity-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
+              {/* Employee Productivity */}
+              <div className="card">
+                <div className="card-header">
+                  <h4>Productivité Employés</h4>
+                </div>
+                <div className="table-container">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Employé</th>
+                        <th style={{ textAlign: 'center' }}>Devis</th>
+                        <th style={{ textAlign: 'right' }}>Total (TND)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data?.revenueByEmployee?.length > 0 ? (
+                        data.revenueByEmployee.map((item: any) => (
+                          <tr key={item.employeeId}>
+                            <td>{item.employeeName}</td>
+                            <td style={{ textAlign: 'center' }}>{item.paymentCount}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 600, color: '#22c55e' }}>{maskValue(item.totalAmount)}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr><td colSpan={3} className="text-center">Aucune donnée</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Machine Productivity */}
+              <div className="card">
+                <div className="card-header">
+                  <h4>Productivité Machines</h4>
+                </div>
+                <div className="table-container">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Machine</th>
+                        <th style={{ textAlign: 'center' }}>Ops</th>
+                        <th style={{ textAlign: 'right' }}>Total (TND)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data?.productivityByMachine?.length > 0 ? (
+                        data.productivityByMachine.map((item: any) => (
+                          <tr key={item.machine}>
+                            <td><span className="badge">{item.machine}</span></td>
+                            <td style={{ textAlign: 'center' }}>{item.count}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 600, color: '#22c55e' }}>{maskValue(item.totalAmount)}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr><td colSpan={3} className="text-center">Aucune donnée</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Net Summary */}
         {stats && (

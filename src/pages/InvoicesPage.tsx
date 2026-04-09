@@ -51,7 +51,7 @@ export function InvoicesPage() {
         totalAmount: invoice.totalAmount,
         pdfUrl: invoice.pdfUrl,
         createdAt: invoice.createdAt,
-        client: invoice.client!,
+        client: invoice.client || { id: 'deleted', name: 'Client Supprimé' },
         devis: invoice.devis || [],
       }));
       setInvoices(invoicesData);
@@ -178,7 +178,7 @@ export function InvoicesPage() {
             filteredInvoices,
             [
               { header: 'Référence', accessor: (inv) => inv.reference },
-              { header: 'Client', accessor: (inv) => inv.client.name },
+              { header: 'Client', accessor: (inv) => inv.client?.name || 'Client Supprimé' },
               { header: 'Devis associés', accessor: (inv) => inv.devis.map(d => d.reference).join(', ') || '-' },
               { header: 'Montant (TND)', accessor: (inv) => Number(inv.totalAmount).toFixed(3) },
               { header: 'Date', accessor: (inv) => new Date(inv.createdAt).toLocaleDateString('fr-FR') },
@@ -223,7 +223,7 @@ export function InvoicesPage() {
                           <span className="font-medium">{invoice.reference}</span>
                         </div>
                       </td>
-                      <td>{invoice.client.name}</td>
+                      <td>{invoice.client?.name || 'Client Supprimé'}</td>
                       <td>
                         {invoice.devis.length > 0
                           ? invoice.devis.map(d => d.reference).join(', ')

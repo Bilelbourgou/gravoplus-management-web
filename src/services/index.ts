@@ -171,6 +171,11 @@ export const devisApi = {
         return res.data.data!;
     },
 
+    updateAmount: async (id: string, amount: number): Promise<Devis> => {
+        const res = await api.patch<ApiResponse<Devis>>(`/devis/${id}/amount`, { amount });
+        return res.data.data!;
+    },
+
     delete: async (id: string): Promise<void> => {
         await api.delete(`/devis/${id}`);
     },
@@ -427,8 +432,8 @@ export const notificationsApi = {
 // ==================== Rapport ====================
 
 export const rapportApi = {
-    getYearly: async (year: number): Promise<any> => {
-        const res = await api.get('/rapport/yearly', { params: { year } });
+    getYearly: async (year: number, month?: number, day?: number): Promise<any> => {
+        const res = await api.get('/rapport/yearly', { params: { year, month, day } });
         return res.data;
     },
 

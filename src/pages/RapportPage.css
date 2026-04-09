@@ -186,6 +186,19 @@
   cursor: pointer;
 }
 
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-group label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
 .rapport-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -360,4 +373,36 @@
   border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
+}
+
+/* Productivity Grid */
+.productivity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .productivity-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.productivity-grid .card {
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.productivity-grid .card-header {
+  padding: 16px 20px;
+  background: var(--bg-surface-hover);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.productivity-grid .card-header h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
 }

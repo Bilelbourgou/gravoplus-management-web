@@ -480,19 +480,21 @@ function DevisDetailModal({
                         placeholder="Description..."
                       />
                     </div>
-                    <div className="form-group" style={{ maxWidth: '120px' }}>
-                      <label className="form-label">Nombre</label>
-                      <input
-                        type="number"
-                        className="form-input"
-                        value={lineForm.quantity || 1}
-                        onChange={(e) =>
-                          setLineForm({ ...lineForm, quantity: parseInt(e.target.value) || 1 })
-                        }
-                        placeholder="1"
-                        min="1"
-                      />
-                    </div>
+                    {lineForm.machineType !== 'CUSTOM' && (
+                      <div className="form-group" style={{ maxWidth: '120px' }}>
+                        <label className="form-label">Nombre</label>
+                        <input
+                          type="number"
+                          className="form-input"
+                          value={lineForm.quantity || 1}
+                          onChange={(e) =>
+                            setLineForm({ ...lineForm, quantity: parseInt(e.target.value) || 1 })
+                          }
+                          placeholder="1"
+                          min="1"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-row">

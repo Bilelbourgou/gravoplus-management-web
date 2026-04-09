@@ -10,6 +10,8 @@ import {
   Plus,
   Trash2,
   X,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import {
   BarChart,
@@ -65,6 +67,7 @@ interface CustomColumn {
 export function DashboardPage() {
   const { user, privacyMode } = useAuthStore();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [unpaidClientsCollapsed, setUnpaidClientsCollapsed] = useState(false);
   
   const maskCount = (val: number) => {
     if (!privacyMode) return val;
@@ -291,36 +294,45 @@ export function DashboardPage() {
         {/* Unpaid Clients Warning */}
         {stats.unpaidClients && stats.unpaidClients.length > 0 && (
           <div className="card" style={{ borderLeft: '4px solid #f59e0b', marginBottom: '1.5rem' }}>
-            <div className="card-header flex justify-between items-center">
+            <div 
+              className="card-header flex justify-between items-center" 
+              onClick={() => setUnpaidClientsCollapsed(!unpaidClientsCollapsed)}
+              style={{ cursor: 'pointer' }}
+            >
               <h3 style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <AlertTriangle size={20} />
                 Clients avec solde impayé ({stats.unpaidClients.length})
               </h3>
-            </div>
-            <div className="card-body">
-              <div className="table-container">
-                <table className="table">
-                  <thead>
-                    <tr>
-                      <th>Client</th>
-                      <th>Total</th>
-                      <th>Payé</th>
-                      <th>Reste</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.unpaidClients.map((c) => (
-                      <tr key={c.clientId}>
-                        <td className="font-medium">{c.clientName}</td>
-                        <td>{c.totalAmount.toFixed(3)} TND</td>
-                        <td style={{ color: '#22c55e' }}>{c.totalPaid.toFixed(3)} TND</td>
-                        <td style={{ color: '#ef4444', fontWeight: 700 }}>{c.remaining.toFixed(3)} TND</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="text-muted">
+                {unpaidClientsCollapsed ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
               </div>
             </div>
+            {!unpaidClientsCollapsed && (
+              <div className="card-body">
+                <div className="table-container">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Client</th>
+                        <th>Total</th>
+                        <th>Payé</th>
+                        <th>Reste</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.unpaidClients.map((c) => (
+                        <tr key={c.clientId}>
+                          <td className="font-medium">{c.clientName}</td>
+                          <td>{c.totalAmount.toFixed(3)} TND</td>
+                          <td style={{ color: '#22c55e' }}>{c.totalPaid.toFixed(3)} TND</td>
+                          <td style={{ color: '#ef4444', fontWeight: 700 }}>{c.remaining.toFixed(3)} TND</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -582,7 +594,6 @@ export function DashboardPage() {
                     <thead>
                       <tr>
                         <th style={{ minWidth: '200px' }}>Description</th>
-                        <th style={{ minWidth: '100px' }}>Quantité</th>
                         <th style={{ minWidth: '120px' }}>Prix Unitaire</th>
                         {customColumns.map(col => (
                           <th key={col.id} style={{ minWidth: '120px' }}>{col.name}</th>
@@ -601,16 +612,6 @@ export function DashboardPage() {
                               placeholder="Description de l'article"
                               value={item.description}
                               onChange={(e) => updateCustomItem(item.id, 'description', e.target.value)}
-                            />
-                          </td>
-                          <td>
-                            <input
-                              type="number"
-                              className="form-input"
-                              min="0.01"
-                              step="0.01"
-                              value={item.quantity}
-                              onChange={(e) => updateCustomItem(item.id, 'quantity', parseFloat(e.target.value) || 0)}
                             />
                           </td>
                           <td>
@@ -651,7 +652,7 @@ export function DashboardPage() {
                     </tbody>
                     <tfoot>
                       <tr>
-                        <td colSpan={3 + customColumns.length} style={{ textAlign: 'right', fontWeight: 700 }}>Total:</td>
+                        <td colSpan={2 + customColumns.length} style={{ textAlign: 'right', fontWeight: 700 }}>Total:</td>
                         <td style={{ fontWeight: 700, color: 'var(--primary-500)' }}>
                           {calculateCustomTotal().toFixed(3)} TND
                         </td>

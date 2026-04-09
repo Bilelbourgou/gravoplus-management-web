@@ -7,18 +7,19 @@ import {
   AlertCircle,
   FileText,
   Lock,
-  Users,
   Receipt,
   ChevronDown,
   ChevronUp,
   Search,
   Plus,
   User,
-  Box,
+  Edit2,
+  Trash2,
+  Save,
 } from 'lucide-react';
 import { Header } from '../components/layout';
 import { useAuthStore } from '../store/auth.store';
-import { invoicesApi, clientsApi, devisApi } from '../services';
+import { invoicesApi, clientsApi, devisApi, paymentsApi } from '../services';
 import type { Client, Devis } from '../types';
 import { financialService, type FinancialStats, type FinancialClosure, type CaisseDevis, type CreateCaissePaymentData } from '../services/financial.service';
 import './FinancialPage.css';
@@ -54,6 +55,18 @@ const FinancialPage: React.FC = () => {
   const [expandedDevisId, setExpandedDevisId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('');
+
+  // SUPERADMIN: Edit Devis modal state
+  const [editingDevis, setEditingDevis] = useState<CaisseDevis | null>(null);
+  const [editDevisStatus, setEditDevisStatus] = useState<string>('');
+  const [editDevisNotes, setEditDevisNotes] = useState<string>('');
+  const [editDevisAmount, setEditDevisAmount] = useState<number>(0);
+  const [editDevisLoading, setEditDevisLoading] = useState(false);
+
+  // SUPERADMIN: Edit Payment modal state
+  const [editingPayment, setEditingPayment] = useState<any | null>(null);
+  const [editPaymentForm, setEditPaymentForm] = useState({ amount: 0, paymentMethod: '', reference: '', description: '' });
+  const [editPaymentLoading, setEditPaymentLoading] = useState(false);
 
   // Direct recette modal state
   const [showRecetteModal, setShowRecetteModal] = useState(false);
@@ -116,6 +129,81 @@ const FinancialPage: React.FC = () => {
       await fetchData();
     } catch (err: any) {
       alert(err.message || 'Erreur lors de la facturation');
+    }
+  };
+
+  // ===== SUPERADMIN: Edit Devis =====
+  const handleOpenEditDevis = (d: CaisseDevis) => {
+    setEditingDevis(d);
+    setEditDevisStatus(d.status);
+    setEditDevisNotes(d.notes || '');
+    setEditDevisAmount(Number(d.totalAmount));
+  };
+
+  const handleSaveEditDevis = async () => {
+    if (!editingDevis) return;
+    setEditDevisLoading(true);
+    try {
+      if (editDevisStatus !== editingDevis.status) {
+        await devisApi.updateStatus(editingDevis.id, editDevisStatus);
+      }
+      if (editDevisAmount !== Number(editingDevis.totalAmount)) {
+        await devisApi.updateAmount(editingDevis.id, editDevisAmount);
+      }
+      if (editDevisNotes !== (editingDevis.notes || '')) {
+        await devisApi.updateNotes(editingDevis.id, editDevisNotes);
+      }
+      setEditingDevis(null);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || err.message || 'Erreur lors de la modification du devis');
+    } finally {
+      setEditDevisLoading(false);
+    }
+  };
+
+  const handleDeleteDevis = async (d: CaisseDevis) => {
+    if (!confirm(`Supprimer le devis ${d.reference} ? Cette action est irréversible.`)) return;
+    try {
+      await devisApi.delete(d.id);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || err.message || 'Erreur lors de la suppression');
+    }
+  };
+
+  // ===== SUPERADMIN: Edit Payment =====
+  const handleOpenEditPayment = (p: any) => {
+    setEditingPayment(p);
+    setEditPaymentForm({
+      amount: Number(p.amount),
+      paymentMethod: p.paymentMethod || 'Espèces',
+      reference: p.reference || '',
+      description: p.description || '',
+    });
+  };
+
+  const handleSaveEditPayment = async () => {
+    if (!editingPayment) return;
+    setEditPaymentLoading(true);
+    try {
+      await paymentsApi.update(editingPayment.id, editPaymentForm);
+      setEditingPayment(null);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || err.message || 'Erreur lors de la modification');
+    } finally {
+      setEditPaymentLoading(false);
+    }
+  };
+
+  const handleDeletePayment = async (p: any) => {
+    if (!confirm(`Supprimer cet encaissement de ${Number(p.amount).toFixed(3)} TND ? Cette action est irréversible.`)) return;
+    try {
+      await paymentsApi.delete(p.id);
+      await fetchData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || err.message || 'Erreur lors de la suppression');
     }
   };
 
@@ -183,11 +271,14 @@ const FinancialPage: React.FC = () => {
   }, [caisseDevis, statusFilter, searchQuery]);
 
   const devisSummary = useMemo(() => {
-    const total = caisseDevis.reduce((s, d) => s + Number(d.totalAmount), 0);
+    const totalAmount = caisseDevis.reduce((s, d) => s + Number(d.totalAmount), 0);
+    const totalPayments = caisseDevis.reduce((s, d) => 
+      s + (d.payments || []).reduce((ps, p) => ps + Number(p.amount), 0), 0
+    );
     const draft = caisseDevis.filter(d => d.status === 'DRAFT').length;
     const validated = caisseDevis.filter(d => d.status === 'VALIDATED').length;
     const invoiced = caisseDevis.filter(d => d.status === 'INVOICED').length;
-    return { total, draft, validated, invoiced, count: caisseDevis.length };
+    return { totalAmount, totalPayments, draft, validated, invoiced, count: caisseDevis.length };
   }, [caisseDevis]);
 
   const formatDate = (dateString: string) => {
@@ -232,8 +323,8 @@ const FinancialPage: React.FC = () => {
             <div className="stat-icon green">
               <TrendingUp size={24} />
             </div>
-            <div className="stat-value">{maskValue(devisSummary.total)} <span className="currency">TND</span></div>
-            <div className="stat-label">Montant Total</div>
+            <div className="stat-value">{maskValue(isAdmin && stats ? stats.totalIncome : devisSummary.totalPayments)} <span className="currency">TND</span></div>
+            <div className="stat-label">Montant Encaissé</div>
           </div>
           {isAdmin && stats && (
             <>
@@ -250,6 +341,13 @@ const FinancialPage: React.FC = () => {
                 </div>
                 <div className="stat-value">{maskValue(stats.balance || 0)} <span className="currency">TND</span></div>
                 <div className="stat-label">Solde Caisse</div>
+              </div>
+              <div className={`stat-card profit-card ${stats.balance >= 0 ? 'positive' : 'negative'}`}>
+                <div className="stat-icon purple">
+                  <TrendingUp size={24} />
+                </div>
+                <div className="stat-value">{maskValue(stats.balance || 0)} <span className="currency">TND</span></div>
+                <div className="stat-label">Profit Net</div>
               </div>
             </>
           )}
@@ -293,15 +391,9 @@ const FinancialPage: React.FC = () => {
                   <TrendingUp size={16} style={{marginRight: 8}}/> Recettes
                 </button>
                 <button className={`tab-btn ${activeTab === 2 ? 'active' : ''}`} onClick={() => setActiveTab(2)}>
-                  <Users size={16} style={{marginRight: 8}}/> Par Employé
-                </button>
-                <button className={`tab-btn ${activeTab === 3 ? 'active' : ''}`} onClick={() => setActiveTab(3)}>
-                  <Box size={16} style={{marginRight: 8}}/> Par Machine
-                </button>
-                <button className={`tab-btn ${activeTab === 4 ? 'active' : ''}`} onClick={() => setActiveTab(4)}>
                   <TrendingDown size={16} style={{marginRight: 8}}/> Dépenses
                 </button>
-                <button className={`tab-btn ${activeTab === 5 ? 'active' : ''}`} onClick={() => setActiveTab(5)}>
+                <button className={`tab-btn ${activeTab === 3 ? 'active' : ''}`} onClick={() => setActiveTab(3)}>
                   <Clock size={16} style={{marginRight: 8}}/> Historique
                 </button>
               </>
@@ -367,7 +459,7 @@ const FinancialPage: React.FC = () => {
                           <tr style={{ cursor: 'pointer' }} onClick={() => setExpandedDevisId(isExpanded ? null : d.id)}>
                             <td>{isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}</td>
                             <td><span className="font-medium">{d.reference}</span></td>
-                            <td>{d.client?.name || '-'}</td>
+                            <td>{d.client?.name || (d.clientId ? 'Client Supprimé' : '-')}</td>
                             <td>
                               <span>{d.createdBy?.firstName} {d.createdBy?.lastName}</span>
                               {d.createdBy?.role && (
@@ -386,6 +478,16 @@ const FinancialPage: React.FC = () => {
                                     <button className="btn btn-primary btn-sm" onClick={() => handleInvoiceDevis(d.id)} title="Facturer">
                                       <Receipt size={14} /> Facturer
                                     </button>
+                                  )}
+                                  {isSuperAdmin && (
+                                    <>
+                                      <button className="btn btn-ghost btn-sm sa-action-btn sa-edit" onClick={() => handleOpenEditDevis(d)} title="Modifier">
+                                        <Edit2 size={14} />
+                                      </button>
+                                      <button className="btn btn-ghost btn-sm sa-action-btn sa-delete" onClick={() => handleDeleteDevis(d)} title="Supprimer">
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </>
                                   )}
                                 </div>
                               </td>
@@ -437,7 +539,7 @@ const FinancialPage: React.FC = () => {
                                     <div className="devis-detail-section">
                                       <h4>Infos Client</h4>
                                       <div className="client-info-card">
-                                        <p className="client-name">{d.client?.name}</p>
+                                        <p className="client-name">{d.client?.name || 'Client Supprimé'}</p>
                                         {d.client?.phone && <p>Tél: {d.client.phone}</p>}
                                         {d.client?.email && <p>Email: {d.client.email}</p>}
                                         {d.client?.address && <p>Adresse: {d.client.address}</p>}
@@ -495,6 +597,7 @@ const FinancialPage: React.FC = () => {
                       <th>Effectué par</th>
                       <th>Mode</th>
                       <th style={{ textAlign: 'right' }}>Montant (TND)</th>
+                      {isSuperAdmin && <th>Actions</th>}
                     </tr>
                   </thead>
                   <tbody>
@@ -502,16 +605,28 @@ const FinancialPage: React.FC = () => {
                       stats.payments.map((p) => (
                         <tr key={p.id}>
                           <td>{formatDate(p.paymentDate)}</td>
-                          <td>{p.devis?.client?.name || p.invoice?.client?.name || p.description || '-'}</td>
+                          <td>{p.devis?.client?.name || p.invoice?.client?.name || p.description || ((p.devis?.clientId || p.invoice?.clientId) ? 'Client Supprimé' : '-')}</td>
                           <td>{p.devis?.reference || p.invoice?.reference || '-'}</td>
                           <td>{p.reference || '-'}</td>
                           <td>{p.createdBy?.firstName || '-'} {p.createdBy?.lastName || ''}</td>
                           <td><span className="badge badge-info">{p.paymentMethod || 'Espèces'}</span></td>
                           <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#22c55e' }}>+{Number(p.amount).toFixed(3)}</td>
+                          {isSuperAdmin && (
+                            <td>
+                              <div className="action-buttons" style={{ display: 'flex', gap: 4 }}>
+                                <button className="btn btn-ghost btn-sm sa-action-btn sa-edit" onClick={() => handleOpenEditPayment(p)} title="Modifier">
+                                  <Edit2 size={14} />
+                                </button>
+                                <button className="btn btn-ghost btn-sm sa-action-btn sa-delete" onClick={() => handleDeletePayment(p)} title="Supprimer">
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </td>
+                          )}
                         </tr>
                       ))
                     ) : (
-                      <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>Aucune recette pour cette session</td></tr>
+                      <tr><td colSpan={isSuperAdmin ? 8 : 7} style={{ textAlign: 'center', padding: '2rem' }}>Aucune recette pour cette session</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -519,64 +634,9 @@ const FinancialPage: React.FC = () => {
             </div>
           )}
 
-          {/* ===== PAR EMPLOYÉ TAB (Admin) ===== */}
-          {activeTab === 2 && isAdmin && (
-            <div className="tab-content table-container">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Employé (Productivité)</th>
-                    <th style={{ textAlign: 'center' }}>Nombre de Devis</th>
-                    <th style={{ textAlign: 'right' }}>Montant Validé (TND)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats?.revenueByEmployee && stats.revenueByEmployee.length > 0 ? (
-                    stats.revenueByEmployee.map((item) => (
-                      <tr key={item.employeeId}>
-                        <td>{item.employeeName}</td>
-                        <td style={{ textAlign: 'center' }}>{item.paymentCount}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#22c55e' }}>{Number(item.totalAmount).toFixed(3)}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr><td colSpan={3} style={{ textAlign: 'center', padding: '2rem' }}>Aucune recette par employé</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* ===== PAR MACHINE TAB (Admin) ===== */}
-          {activeTab === 3 && isAdmin && (
-            <div className="tab-content table-container">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Machine</th>
-                    <th style={{ textAlign: 'center' }}>Nombre d'Opérations</th>
-                    <th style={{ textAlign: 'right' }}>Montant Total (TND)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {stats?.productivityByMachine && stats.productivityByMachine.length > 0 ? (
-                    stats.productivityByMachine.map((item) => (
-                      <tr key={item.machine}>
-                        <td><span className="badge">{item.machine}</span></td>
-                        <td style={{ textAlign: 'center' }}>{item.count}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 'bold', color: '#22c55e' }}>{Number(item.totalAmount).toFixed(3)}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr><td colSpan={3} style={{ textAlign: 'center', padding: '2rem' }}>Aucune donnée par machine</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
 
           {/* ===== DÉPENSES TAB (Admin) ===== */}
-          {activeTab === 4 && isAdmin && (
+          {activeTab === 2 && isAdmin && (
             <div className="tab-content table-container">
               <table className="table">
                 <thead>
@@ -608,7 +668,7 @@ const FinancialPage: React.FC = () => {
           )}
 
           {/* ===== HISTORIQUE TAB (Admin) ===== */}
-          {activeTab === 5 && isAdmin && (
+          {activeTab === 3 && isAdmin && (
             <div className="tab-content table-container">
               <table className="table">
                 <thead>
@@ -825,6 +885,165 @@ const FinancialPage: React.FC = () => {
                 disabled={recetteLoading || recetteForm.amount <= 0 || (!recetteForm.devisId && !recetteForm.description?.trim())}
               >
                 {recetteLoading ? 'Enregistrement...' : 'Enregistrer la Recette'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== SUPERADMIN: Edit Devis Modal ===== */}
+      {editingDevis && (
+        <div className="modal-overlay" onClick={() => setEditingDevis(null)}>
+          <div className="modal-content sa-edit-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Modifier le Devis</h2>
+              <button className="close-btn" onClick={() => setEditingDevis(null)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="sa-edit-info">
+                <div className="sa-edit-info-row">
+                  <span className="sa-edit-label">Référence</span>
+                  <span className="sa-edit-value font-medium">{editingDevis.reference}</span>
+                </div>
+                <div className="sa-edit-info-row">
+                  <span className="sa-edit-label">Client</span>
+                  <span className="sa-edit-value">{editingDevis.client?.name || '-'}</span>
+                </div>
+                <div className="sa-edit-info-row">
+                  <span className="sa-edit-label">Montant</span>
+                  <span className="sa-edit-value" style={{ color: 'var(--color-primary-500)', fontWeight: 700 }}>{Number(editingDevis.totalAmount).toFixed(3)} TND</span>
+                </div>
+                <div className="sa-edit-info-row">
+                  <span className="sa-edit-label">Créé par</span>
+                  <span className="sa-edit-value">{editingDevis.createdBy?.firstName} {editingDevis.createdBy?.lastName}</span>
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                <label className="form-label">Statut</label>
+                <select
+                  className="form-control"
+                  value={editDevisStatus}
+                  onChange={(e) => setEditDevisStatus(e.target.value)}
+                >
+                  <option value="DRAFT">Brouillon</option>
+                  <option value="VALIDATED">Validé</option>
+                  <option value="INVOICED">Facturé</option>
+                  <option value="CANCELLED">Annulé</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label className="form-label">Montant (TND)</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  step="0.001"
+                  min="0"
+                  value={editDevisAmount}
+                  onChange={(e) => setEditDevisAmount(parseFloat(e.target.value) || 0)}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label className="form-label">Notes</label>
+                <textarea
+                  className="form-control"
+                  rows={3}
+                  value={editDevisNotes}
+                  onChange={(e) => setEditDevisNotes(e.target.value)}
+                  placeholder="Notes..."
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setEditingDevis(null)} disabled={editDevisLoading}>Annuler</button>
+              <button className="btn btn-primary" onClick={handleSaveEditDevis} disabled={editDevisLoading}>
+                {editDevisLoading ? 'Enregistrement...' : <><Save size={16} style={{ marginRight: 6 }} /> Enregistrer</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== SUPERADMIN: Edit Payment Modal ===== */}
+      {editingPayment && (
+        <div className="modal-overlay" onClick={() => setEditingPayment(null)}>
+          <div className="modal-content sa-edit-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Modifier l'Encaissement</h2>
+              <button className="close-btn" onClick={() => setEditingPayment(null)}>×</button>
+            </div>
+            <div className="modal-body">
+              <div className="sa-edit-info" style={{ marginBottom: '1.5rem' }}>
+                <div className="sa-edit-info-row">
+                  <span className="sa-edit-label">Date</span>
+                  <span className="sa-edit-value">{formatDate(editingPayment.paymentDate)}</span>
+                </div>
+                <div className="sa-edit-info-row">
+                  <span className="sa-edit-label">Créé par</span>
+                  <span className="sa-edit-value">{editingPayment.createdBy?.firstName || '-'} {editingPayment.createdBy?.lastName || ''}</span>
+                </div>
+                {(editingPayment.devis?.reference || editingPayment.invoice?.reference) && (
+                  <div className="sa-edit-info-row">
+                    <span className="sa-edit-label">Réf. Devis/Facture</span>
+                    <span className="sa-edit-value">{editingPayment.devis?.reference || editingPayment.invoice?.reference}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Montant (TND) *</label>
+                <input
+                  type="number"
+                  className="form-control"
+                  step="0.001"
+                  min="0"
+                  value={editPaymentForm.amount || ''}
+                  onChange={(e) => setEditPaymentForm({ ...editPaymentForm, amount: parseFloat(e.target.value) || 0 })}
+                />
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label className="form-label">Description</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={editPaymentForm.description}
+                  onChange={(e) => setEditPaymentForm({ ...editPaymentForm, description: e.target.value })}
+                  placeholder="Description..."
+                />
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label className="form-label">Mode de paiement</label>
+                <select
+                  className="form-control"
+                  value={editPaymentForm.paymentMethod}
+                  onChange={(e) => setEditPaymentForm({ ...editPaymentForm, paymentMethod: e.target.value })}
+                >
+                  <option value="Espèces">Espèces</option>
+                  <option value="Chèque">Chèque</option>
+                  <option value="Virement">Virement</option>
+                  <option value="Carte">Carte</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1rem' }}>
+                <label className="form-label">Référence</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={editPaymentForm.reference}
+                  onChange={(e) => setEditPaymentForm({ ...editPaymentForm, reference: e.target.value })}
+                  placeholder="N° chèque, réf. virement..."
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setEditingPayment(null)} disabled={editPaymentLoading}>Annuler</button>
+              <button className="btn btn-primary" onClick={handleSaveEditPayment} disabled={editPaymentLoading || editPaymentForm.amount <= 0}>
+                {editPaymentLoading ? 'Enregistrement...' : <><Save size={16} style={{ marginRight: 6 }} /> Enregistrer</>}
               </button>
             </div>
           </div>
