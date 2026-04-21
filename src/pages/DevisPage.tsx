@@ -642,22 +642,7 @@ function DevisDetailModal({
                         </div>
                       </div>
                     )}
-                    {lineForm.machineType === 'PANNEAUX' && (
-                      <div className="form-group">
-                        <label className="form-label">Quantité</label>
-                        <input
-                          type="number"
-                          className="form-input"
-                          value={lineForm.quantity || ''}
-                          onChange={(e) =>
-                            setLineForm({ ...lineForm, quantity: parseFloat(e.target.value) || undefined })
-                          }
-                          placeholder="0"
-                          min="0.01"
-                          step="0.01"
-                        />
-                      </div>
-                    )}
+
                     {lineForm.machineType === 'SERVICE_MAINTENANCE' && (
                       <>
                         <div className="form-group">
@@ -711,20 +696,7 @@ function DevisDetailModal({
                                 ))}
                               </select>
                             </div>
-                            <div className="form-group">
-                              <label className="form-label">Quantité</label>
-                              <input
-                                type="number"
-                                className="form-input"
-                                value={lineForm.quantity || ''}
-                                onChange={(e) =>
-                                  setLineForm({ ...lineForm, quantity: parseFloat(e.target.value) || undefined })
-                                }
-                                placeholder="1"
-                                min="0.01"
-                                step="0.01"
-                              />
-                            </div>
+
                           </>
                         )}
 
@@ -747,20 +719,7 @@ function DevisDetailModal({
                                 ))}
                               </select>
                             </div>
-                            <div className="form-group">
-                              <label className="form-label">Quantité</label>
-                              <input
-                                type="number"
-                                className="form-input"
-                                value={lineForm.quantity || ''}
-                                onChange={(e) =>
-                                  setLineForm({ ...lineForm, quantity: parseFloat(e.target.value) || undefined })
-                                }
-                                placeholder="1"
-                                min="1"
-                                step="1"
-                              />
-                            </div>
+
                           </>
                         )}
                       </>
