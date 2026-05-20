@@ -19,6 +19,31 @@ export interface CaisseDevis extends Devis {
     }>;
 }
 
+export interface ScopeStats {
+    totalIncome: number;
+    totalExpense: number;
+    balance: number;
+    payments: Array<{
+        id: string;
+        amount: number;
+        paymentMethod: string;
+        paymentDate: string;
+        reference: string;
+        description?: string;
+        devis?: { id: string; reference: string; clientId?: string; client?: { name: string } };
+        createdBy?: { firstName: string; lastName: string; role?: string };
+    }>;
+    expenses: Array<{
+        id: string;
+        amount: number;
+        description: string;
+        category: string;
+        date: string;
+        reference: string;
+        createdBy: { firstName: string; lastName: string; role?: string };
+    }>;
+}
+
 export interface FinancialStats {
     periodStart: string | null;
     periodEnd: string;
@@ -27,6 +52,8 @@ export interface FinancialStats {
     balance: number;
     scope?: string;
     lastClosureDate: string | null;
+    adminScope?: ScopeStats;
+    superadminScope?: ScopeStats;
     payments: Array<{
         id: string;
         amount: number;

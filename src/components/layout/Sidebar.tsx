@@ -25,7 +25,7 @@ const navItems = [
   { path: '/employees', icon: UserCog, label: 'Employés' },
   { path: '/machines', icon: Cpu, label: 'Machines' },
   { path: '/devis', icon: FileText, label: 'Devis', superAdminOnly: true },
-  { path: '/encaissements', icon: Wallet, label: 'Encaissements', notSuperAdmin: true },
+  { path: '/encaissements', icon: Wallet, label: 'Encaissements' },
   { path: '/invoices', icon: Receipt, label: 'Factures' },
   { path: '/expenses', icon: Wallet, label: 'Dépenses', adminOnly: true },
   { path: '/financial', icon: Receipt, label: 'Caisse' },

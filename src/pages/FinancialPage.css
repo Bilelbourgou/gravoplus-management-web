@@ -476,3 +476,130 @@
     gap: var(--space-1);
   }
 }
+
+
+/* ===== Scope Breakdown Section ===== */
+.scope-breakdown-section {
+  margin: 1.5rem 0;
+}
+
+.scope-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+}
+
+@media (max-width: 900px) {
+  .scope-breakdown-grid { grid-template-columns: 1fr; }
+}
+
+/* Stat-card extension for scope groups */
+.scope-group-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.scope-total-card {
+  border-color: var(--color-success-500);
+}
+
+.scope-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.scope-group-icon {
+  width: 36px !important;
+  height: 36px !important;
+  margin-bottom: 0 !important;
+  flex-shrink: 0;
+}
+
+.scope-group-title {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.scope-group-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.scope-group-metric {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.scope-metric-icon {
+  width: 32px !important;
+  height: 32px !important;
+  margin-bottom: 0 !important;
+  flex-shrink: 0;
+}
+
+.scope-metric-value {
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+/* ===== Répartition Tab ===== */
+.scope-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 900px) {
+  .scope-detail-grid { grid-template-columns: 1fr; }
+}
+
+.scope-detail-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.scope-detail-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-md, 8px) var(--radius-md, 8px) 0 0;
+}
+
+.scope-admin-title { background: rgba(139,195,74,0.1); color: var(--color-primary-400); border: 1px solid var(--border-subtle); }
+.scope-superadmin-title { background: rgba(156,39,176,0.1); color: #9c27b0; border: 1px solid var(--border-subtle); }
+
+.scope-summary-mini {
+  display: flex;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-top: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  flex-wrap: wrap;
+}
+
+.scope-summary-mini .income { color: var(--color-success-500); }
+.scope-summary-mini .expense { color: var(--color-error-500); }
+
+.scope-sub-title {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}

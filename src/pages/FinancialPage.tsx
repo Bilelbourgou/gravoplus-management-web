@@ -13,6 +13,7 @@ import {
   Search,
   Plus,
   User,
+  Users,
   Edit2,
   Trash2,
   Save,
@@ -353,6 +354,106 @@ const FinancialPage: React.FC = () => {
           )}
         </div>
 
+        {/* SuperAdmin Scope Breakdown */}
+        {isSuperAdmin && stats?.adminScope && stats?.superadminScope && (
+          <div className="scope-breakdown-section">
+            <h3 className="section-title" style={{ marginBottom: '1rem' }}>Répartition de la Caisse</h3>
+            <div className="scope-breakdown-grid">
+
+              <div className="stat-card scope-group-card">
+                <div className="scope-group-header">
+                  <div className="stat-icon blue scope-group-icon"><Users size={18} /></div>
+                  <span className="scope-group-title">Admin &amp; Employés</span>
+                </div>
+                <div className="scope-group-metrics">
+                  <div className="scope-group-metric">
+                    <div className="stat-icon green scope-metric-icon"><TrendingUp size={16} /></div>
+                    <div>
+                      <div className="scope-metric-value">{maskValue(stats.adminScope.totalIncome)} <span className="currency">TND</span></div>
+                      <div className="stat-label">Recettes</div>
+                    </div>
+                  </div>
+                  <div className="scope-group-metric">
+                    <div className="stat-icon red scope-metric-icon"><TrendingDown size={16} /></div>
+                    <div>
+                      <div className="scope-metric-value">{maskValue(stats.adminScope.totalExpense)} <span className="currency">TND</span></div>
+                      <div className="stat-label">Dépenses</div>
+                    </div>
+                  </div>
+                  <div className="scope-group-metric">
+                    <div className={`stat-icon scope-metric-icon ${stats.adminScope.balance >= 0 ? 'green' : 'red'}`}><Wallet size={16} /></div>
+                    <div>
+                      <div className="scope-metric-value">{maskValue(stats.adminScope.balance)} <span className="currency">TND</span></div>
+                      <div className="stat-label">Solde</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="stat-card scope-group-card">
+                <div className="scope-group-header">
+                  <div className="stat-icon purple scope-group-icon"><User size={18} /></div>
+                  <span className="scope-group-title">Ma Caisse (Superadmin)</span>
+                </div>
+                <div className="scope-group-metrics">
+                  <div className="scope-group-metric">
+                    <div className="stat-icon green scope-metric-icon"><TrendingUp size={16} /></div>
+                    <div>
+                      <div className="scope-metric-value">{maskValue(stats.superadminScope.totalIncome)} <span className="currency">TND</span></div>
+                      <div className="stat-label">Recettes</div>
+                    </div>
+                  </div>
+                  <div className="scope-group-metric">
+                    <div className="stat-icon red scope-metric-icon"><TrendingDown size={16} /></div>
+                    <div>
+                      <div className="scope-metric-value">{maskValue(stats.superadminScope.totalExpense)} <span className="currency">TND</span></div>
+                      <div className="stat-label">Dépenses</div>
+                    </div>
+                  </div>
+                  <div className="scope-group-metric">
+                    <div className={`stat-icon scope-metric-icon ${stats.superadminScope.balance >= 0 ? 'green' : 'red'}`}><Wallet size={16} /></div>
+                    <div>
+                      <div className="scope-metric-value">{maskValue(stats.superadminScope.balance)} <span className="currency">TND</span></div>
+                      <div className="stat-label">Solde</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="stat-card scope-group-card scope-total-card">
+                <div className="scope-group-header">
+                  <div className="stat-icon green scope-group-icon"><Wallet size={18} /></div>
+                  <span className="scope-group-title">Total Combiné</span>
+                </div>
+                <div className="scope-group-metrics">
+                  <div className="scope-group-metric">
+                    <div className="stat-icon green scope-metric-icon"><TrendingUp size={16} /></div>
+                    <div>
+                      <div className="scope-metric-value">{maskValue(stats.totalIncome)} <span className="currency">TND</span></div>
+                      <div className="stat-label">Recettes</div>
+                    </div>
+                  </div>
+                  <div className="scope-group-metric">
+                    <div className="stat-icon red scope-metric-icon"><TrendingDown size={16} /></div>
+                    <div>
+                      <div className="scope-metric-value">{maskValue(stats.totalExpense)} <span className="currency">TND</span></div>
+                      <div className="stat-label">Dépenses</div>
+                    </div>
+                  </div>
+                  <div className="scope-group-metric">
+                    <div className={`stat-icon scope-metric-icon ${stats.balance >= 0 ? 'green' : 'red'}`}><Wallet size={16} /></div>
+                    <div>
+                      <div className="scope-metric-value" style={{ fontWeight: 800 }}>{maskValue(stats.balance)} <span className="currency">TND</span></div>
+                      <div className="stat-label">Solde Net</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
+
         {/* Period Info & Actions (Admin only) */}
         {isAdmin && (
           <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', margin: '2rem 0 1rem' }}>
@@ -396,6 +497,11 @@ const FinancialPage: React.FC = () => {
                 <button className={`tab-btn ${activeTab === 3 ? 'active' : ''}`} onClick={() => setActiveTab(3)}>
                   <Clock size={16} style={{marginRight: 8}}/> Historique
                 </button>
+                {isSuperAdmin && stats?.adminScope && (
+                  <button className={`tab-btn ${activeTab === 4 ? 'active' : ''}`} onClick={() => setActiveTab(4)}>
+                    <Users size={16} style={{marginRight: 8}}/> Répartition
+                  </button>
+                )}
               </>
             )}
           </div>
@@ -710,6 +816,93 @@ const FinancialPage: React.FC = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+          )}
+          {/* REPARTITION TAB */}
+          {activeTab === 4 && isSuperAdmin && stats && stats.adminScope && stats.superadminScope && (
+            <div className="tab-content">
+              <div className="scope-detail-grid">
+                <div className="scope-detail-col">
+                  <h4 className="scope-detail-title scope-admin-title"><Users size={16} /> Admin et Employes</h4>
+                  <div className="scope-summary-mini">
+                    <span className="income">Recettes : {maskValue(stats.adminScope.totalIncome)} TND</span>
+                    <span className="expense">Depenses : {maskValue(stats.adminScope.totalExpense)} TND</span>
+                    <span className={stats.adminScope.balance >= 0 ? "income" : "expense"}>Solde : {maskValue(stats.adminScope.balance)} TND</span>
+                  </div>
+                  <h5 className="scope-sub-title">Recettes</h5>
+                  <div className="table-container">
+                    <table className="table">
+                      <thead><tr><th>Date</th><th>Client / Desc.</th><th>Effectue par</th><th style={{textAlign:"right"}}>Montant</th></tr></thead>
+                      <tbody>
+                        {stats.adminScope.payments.length > 0 ? stats.adminScope.payments.map((p) => (
+                          <tr key={p.id}>
+                            <td>{formatDateShort(p.paymentDate)}</td>
+                            <td>{(p.devis && p.devis.client && p.devis.client.name) || p.description || "-"}</td>
+                            <td>{(p.createdBy && p.createdBy.firstName) || "-"} {(p.createdBy && p.createdBy.lastName) || ""}</td>
+                            <td style={{textAlign:"right",color:"#22c55e",fontWeight:600}}>+{Number(p.amount).toFixed(3)}</td>
+                          </tr>
+                        )) : <tr><td colSpan={4} style={{textAlign:"center",padding:"1rem"}}>Aucune recette</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                  <h5 className="scope-sub-title">Depenses</h5>
+                  <div className="table-container">
+                    <table className="table">
+                      <thead><tr><th>Date</th><th>Description</th><th>Effectue par</th><th style={{textAlign:"right"}}>Montant</th></tr></thead>
+                      <tbody>
+                        {stats.adminScope.expenses.length > 0 ? stats.adminScope.expenses.map((e) => (
+                          <tr key={e.id}>
+                            <td>{formatDateShort(e.date)}</td>
+                            <td>{e.description}</td>
+                            <td>{(e.createdBy && e.createdBy.firstName) || "-"} {(e.createdBy && e.createdBy.lastName) || ""}</td>
+                            <td style={{textAlign:"right",color:"#ef4444",fontWeight:600}}>-{Number(e.amount).toFixed(3)}</td>
+                          </tr>
+                        )) : <tr><td colSpan={4} style={{textAlign:"center",padding:"1rem"}}>Aucune depense</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div className="scope-detail-col">
+                  <h4 className="scope-detail-title scope-superadmin-title"><User size={16} /> Superadmin</h4>
+                  <div className="scope-summary-mini">
+                    <span className="income">Recettes : {maskValue(stats.superadminScope.totalIncome)} TND</span>
+                    <span className="expense">Depenses : {maskValue(stats.superadminScope.totalExpense)} TND</span>
+                    <span className={stats.superadminScope.balance >= 0 ? "income" : "expense"}>Solde : {maskValue(stats.superadminScope.balance)} TND</span>
+                  </div>
+                  <h5 className="scope-sub-title">Recettes</h5>
+                  <div className="table-container">
+                    <table className="table">
+                      <thead><tr><th>Date</th><th>Client / Desc.</th><th>Ref.</th><th style={{textAlign:"right"}}>Montant</th></tr></thead>
+                      <tbody>
+                        {stats.superadminScope.payments.length > 0 ? stats.superadminScope.payments.map((p) => (
+                          <tr key={p.id}>
+                            <td>{formatDateShort(p.paymentDate)}</td>
+                            <td>{(p.devis && p.devis.client && p.devis.client.name) || p.description || "-"}</td>
+                            <td>{(p.devis && p.devis.reference) || p.reference || "-"}</td>
+                            <td style={{textAlign:"right",color:"#22c55e",fontWeight:600}}>+{Number(p.amount).toFixed(3)}</td>
+                          </tr>
+                        )) : <tr><td colSpan={4} style={{textAlign:"center",padding:"1rem"}}>Aucune recette</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                  <h5 className="scope-sub-title">Depenses</h5>
+                  <div className="table-container">
+                    <table className="table">
+                      <thead><tr><th>Date</th><th>Description</th><th>Categorie</th><th style={{textAlign:"right"}}>Montant</th></tr></thead>
+                      <tbody>
+                        {stats.superadminScope.expenses.length > 0 ? stats.superadminScope.expenses.map((e) => (
+                          <tr key={e.id}>
+                            <td>{formatDateShort(e.date)}</td>
+                            <td>{e.description}</td>
+                            <td><span className="badge badge-warning">{e.category}</span></td>
+                            <td style={{textAlign:"right",color:"#ef4444",fontWeight:600}}>-{Number(e.amount).toFixed(3)}</td>
+                          </tr>
+                        )) : <tr><td colSpan={4} style={{textAlign:"center",padding:"1rem"}}>Aucune depense</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

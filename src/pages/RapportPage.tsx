@@ -352,14 +352,14 @@ export function RapportPage() {
               <div className="stat-icon emerald"><TrendingUp size={24} /></div>
               <div className="stat-info">
                 <div className="stat-value">{formatCurrency(stats.totalPaidAmount)}</div>
-                <div className="stat-label">Total Payé ({stats.paidDevisCount} devis)</div>
+                <div className="stat-label">Total Encaissé</div>
               </div>
             </div>
             <div className="rapport-stat-card">
               <div className="stat-icon orange"><AlertTriangle size={24} /></div>
               <div className="stat-info">
                 <div className="stat-value">{formatCurrency(stats.totalUnpaidAmount)}</div>
-                <div className="stat-label">Impayé ({stats.unpaidDevisCount} devis)</div>
+                <div className="stat-label">Solde Restant ({stats.unpaidDevisCount} devis)</div>
               </div>
             </div>
             <div className="rapport-stat-card">
@@ -638,9 +638,9 @@ export function RapportPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', textAlign: 'center' }}>
                 <div>
                   <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#22c55e' }}>
-                    {formatCurrency(stats.totalInvoiceAmount)}
+                    {formatCurrency(stats.totalDevisAmount)}
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Revenus Facturés</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Revenus</div>
                 </div>
                 <div>
                   <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#ef4444' }}>
